@@ -109,8 +109,8 @@
     margin:0 auto;
   }
   .wand-card{
-    width:346px;min-height:528px;padding:0;text-align:center;cursor:pointer;border:none;
-    display:flex;flex-direction:column;height:100%;
+    width:346px;padding:0;text-align:center;cursor:pointer;border:none;
+    display:flex;flex-direction:column;
     background:radial-gradient(120% 90% at 50% 0%, #f3e3bf 0%, #e2cb9f 45%, #c9ad7c 100%);
     color:var(--ink);border-radius:10px;overflow:hidden;position:relative;
     box-shadow:0 0 0 2px rgba(116,0,1,.5),0 0 0 5px rgba(211,166,37,.45),0 18px 40px rgba(0,0,0,.7);
@@ -132,8 +132,8 @@
   .wand-card.med  .diff-banner{background:linear-gradient(180deg,#d59328,#96590d);}
   .wand-card.hard .diff-banner{background:linear-gradient(180deg,#c62a10,#740001);}
   .card-body{
-    flex:1;display:flex;flex-direction:column;
-    padding:14px 20px 22px;
+    display:flex;flex-direction:column;
+    padding:14px 20px 18px;
   }
   .wand-art{height:44px;display:grid;place-items:center;}
   .wand-stick{
@@ -148,7 +148,7 @@
   }
   @keyframes sparkle{0%,100%{opacity:.55;transform:scale(.85);}50%{opacity:1;transform:scale(1.3);}}
   .wand-name{font-size:23px;font-variant:small-caps;letter-spacing:.04em;color:#4a1206;}
-  .flavor{font-style:italic;font-size:15.5px;line-height:1.55;color:#4d2d15;min-height:96px;margin:8px 0 10px;}
+  .flavor{font-style:italic;font-size:15.5px;line-height:1.55;color:#4d2d15;margin:8px 0 12px;}
   .spec{
     text-align:left;border-top:1px solid rgba(90,50,15,.28);
     padding-top:10px;margin-top:4px;
@@ -163,12 +163,13 @@
     border-bottom:1px dotted rgba(90,50,15,.3);padding-bottom:5px;margin-bottom:3px;
   }
   .rec{
-    margin-top:auto;
-    min-height:48px;
-    padding-top:11px;
+    margin-top:4px;
+    padding-top:10px;
+    border-top:1px solid rgba(90,50,15,.22);
     font-size:13px;letter-spacing:.16em;text-transform:uppercase;
     color:#2f7d43;font-weight:700;
     display:flex;align-items:center;justify-content:center;
+    line-height:1.35;
   }
 
   /* ============================================================
@@ -588,14 +589,19 @@
   .end-card h1{font-size:clamp(33px,5.2vw,53px);font-variant:small-caps;color:#4a1206;margin-bottom:6px;}
   .end-sub{font-size:19px;font-style:italic;color:#63421f;margin-bottom:18px;line-height:1.5;}
   .score-ring{
-    margin:4px auto 16px;width:180px;height:180px;border-radius:50%;display:grid;place-items:center;
+    margin:4px auto 16px;width:200px;height:200px;border-radius:50%;display:grid;place-items:center;
+    overflow:visible;
     background:
-      radial-gradient(circle at 50% 50%, rgba(255,250,235,.92) 0 58%, rgba(0,0,0,0) 59%),
+      radial-gradient(circle at 50% 50%, rgba(255,250,235,.92) 0 66%, rgba(0,0,0,0) 67%),
       conic-gradient(var(--gold) calc(var(--pct,0) * 1%), rgba(120,80,20,.22) 0);
     box-shadow:0 0 0 3px rgba(116,0,1,.45), 0 0 34px rgba(238,186,48,.35);
   }
-  .score-ring .num{font-size:60px;color:#7a1a06;line-height:1;}
-  .score-ring .of{font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:#6d4a26;margin-top:4px;}
+  .score-ring .score-inner{padding:0 10px;text-align:center;max-width:100%;}
+  .score-ring .num{font-size:56px;color:#7a1a06;line-height:1;}
+  .score-ring .of{
+    font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#6d4a26;
+    margin-top:4px;line-height:1.25;white-space:nowrap;
+  }
   .breakdown{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-bottom:18px;}
   .bd{
     padding:8px 13px;border-radius:6px;background:rgba(116,0,1,.09);
@@ -784,7 +790,7 @@
           and the castle erupts in scarlet and gold.
         </div>
         <div class="score-ring" id="scoreRing">
-          <div>
+          <div class="score-inner">
             <div class="num" id="finalScore">0</div>
             <div class="of">of 100 points</div>
           </div>
@@ -963,6 +969,35 @@ function lineSlots(x0, y0, x1, y1, n, sizeNear, sizeFar){
   }
   return out;
 }
+function slotDistance(a, b){
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+const ITEM_PX_SCALE = 2.0;
+const ITEM_SLOT_MIN = 24;
+function itemSlotSize(slot){
+  return Math.max(slot.size, ITEM_SLOT_MIN);
+}
+function minSlotGap(slot){
+  return itemSlotSize(slot) * 0.15 + 3.2;
+}
+function pickSpreadSlots(allSlots, count, anchors){
+  anchors = anchors || [];
+  const pool = shuffle(allSlots.slice());
+  const picked = [];
+  for(const slot of pool){
+    const gap = minSlotGap(slot);
+    const clear = anchors.concat(picked).every(p => slotDistance(p, slot) >= Math.max(gap, minSlotGap(p)));
+    if(clear) picked.push(slot);
+    if(picked.length >= count) break;
+  }
+  if(picked.length < count){
+    for(const slot of pool){
+      if(!picked.includes(slot)) picked.push(slot);
+      if(picked.length >= count) break;
+    }
+  }
+  return picked;
+}
 
 /* ============================================================
    AUDIO
@@ -1089,7 +1124,6 @@ function buildWandCards(){
   const list = $("#wandList");
   list.innerHTML = "";
   WANDS.forEach(w=>{
-    const times = ROOMS.map(r=>Math.round(r.base * w.timeMul));
     const card = el("button","wand-card " + w.cls);
     card.type = "button";
     card.innerHTML =
@@ -1098,14 +1132,6 @@ function buildWandCards(){
         '<div class="wand-art"><div class="wand-stick" style="background:'+w.wood+'"></div></div>' +
         '<div class="wand-name">'+w.name+'</div>' +
         '<div class="flavor">&ldquo;'+w.flavor+'&rdquo;</div>' +
-        '<div class="spec">' +
-          '<div class="spec-row head"><span>What this changes</span><span>'+w.tier+'</span></div>' +
-          '<div class="spec-row"><span>Objects to search</span><b>'+w.decoys+' + the Horcrux</b></div>' +
-          '<div class="spec-row"><span>Great Hall timer</span><b>'+times[0]+'s</b></div>' +
-          '<div class="spec-row"><span>Forest timer</span><b>'+times[1]+'s</b></div>' +
-          '<div class="spec-row"><span>Tower timer</span><b>'+times[2]+'s</b></div>' +
-          '<div class="spec-row"><span>Spells to chain</span><b>1 &rarr; 2 &rarr; 3</b></div>' +
-        '</div>' +
         (w.recommend ? '<div class="rec">Recommended for a first run</div>'
                      : '<div class="rec" style="color:#8a6231;">'+w.blurb+'</div>') +
       '</div>';
@@ -1488,23 +1514,25 @@ function paintGreatHall(scene){
     }
   });
 
-  // the searchable objects rest on the two inner table tops
+  // searchable objects on the two inner tables — evenly spaced, alternating sides
   [tables[1], tables[2]].forEach(tb=>{
-    for(let k=0;k<6;k++){
-      const t = 0.10 + k*0.135;
+    for(let k=0;k<4;k++){
+      const t = 0.14 + k*0.18;
       const y = lerp(NEAR_Y, FAR_Y, t);
+      const hw = halfAt(y);
+      const side = k % 2 === 0 ? -0.42 : 0.42;
       slots.push({
-        x: tableXAt(tb, y) + rand(-halfAt(y)*0.5, halfAt(y)*0.5),
-        y: y,
-        size: lerp(34, 14, t)
+        x: tableXAt(tb, y) + side * hw,
+        y: y + 0.5,
+        size: lerp(38, 26, t)
       });
     }
   });
 
   // left bookcase against the wall
-  buildBookcase(scene, slots, 2.5, 17.5, 40, 82, 3, 26);
+  buildBookcase(scene, slots, 2.5, 17.5, 40, 82, 3, 28, 2, 0.2);
   // right sideboard
-  buildBookcase(scene, slots, 82.5, 97.5, 44, 84, 3, 26);
+  buildBookcase(scene, slots, 82.5, 97.5, 44, 84, 3, 28, 2, 0.2);
 
   scene.appendChild(el("div","layer",{
     background:"radial-gradient(80% 72% at 50% 42%, rgba(255,170,60,.13) 0%, rgba(0,0,0,0) 52%, rgba(0,0,0,.86) 100%)"
@@ -1513,7 +1541,9 @@ function paintGreatHall(scene){
 }
 
 /* a wooden shelving unit; pushes one row of slots per shelf */
-function buildBookcase(scene, slots, x0, x1, yTop, yBot, shelves, size){
+function buildBookcase(scene, slots, x0, x1, yTop, yBot, shelves, size, itemsPerShelf, jitter){
+  itemsPerShelf = itemsPerShelf || 3;
+  jitter = jitter == null ? 0.7 : jitter;
   const w = x1 - x0, h = yBot - yTop;
   const unit = el("div","",{
     position:"absolute", left:x0+"%", top:yTop+"%", width:w+"%", height:h+"%",
@@ -1538,7 +1568,7 @@ function buildBookcase(scene, slots, x0, x1, yTop, yBot, shelves, size){
       boxShadow:"0 4px 10px rgba(0,0,0,.75)"
     }));
     const shelfY = yTop + h*t;
-    slots.push.apply(slots, shelfSlots(x0 + w*0.16, x1 - w*0.16, shelfY, 3, size, 0.7));
+    slots.push.apply(slots, shelfSlots(x0 + w*0.16, x1 - w*0.16, shelfY, itemsPerShelf, size, jitter));
   }
   scene.appendChild(unit);
 }
@@ -1660,7 +1690,7 @@ function paintForest(scene){
     }));
   }
   scene.appendChild(fence);
-  slots.push.apply(slots, shelfSlots(8, 92, fenceY - 0.5, 9, 25, 1.2));
+  slots.push.apply(slots, shelfSlots(8, 92, fenceY - 0.5, 9, 29, 1.2));
 
   // snow-topped bushes, each a cluster of overlapping boughs
   const bushes = [[9,86,15],[23,81,12],[36,89,13],[64,89,13],[78,81,12],[92,86,15]];
@@ -1702,7 +1732,7 @@ function paintForest(scene){
       }));
     }
     scene.appendChild(bush);
-    slots.push.apply(slots, shelfSlots(bx - bw*0.26, bx + bw*0.26, by - bh*0.20, 2, 24, 0.8));
+    slots.push.apply(slots, shelfSlots(bx - bw*0.26, bx + bw*0.26, by - bh*0.20, 2, 28, 0.8));
   });
 
   // wind-blown snow drifts across the ground
@@ -1726,7 +1756,7 @@ function paintForest(scene){
     boxShadow:"0 8px 20px rgba(0,0,0,.7)",
     transform:"rotate(-2deg)"
   }));
-  slots.push.apply(slots, shelfSlots(6, 22, 89.5, 3, 30, 0.9));
+  slots.push.apply(slots, shelfSlots(6, 22, 89.5, 3, 34, 0.9));
 
   // foreground framing trunks (with a hollow each)
   const frames = [
@@ -1754,7 +1784,7 @@ function paintForest(scene){
         background:"radial-gradient(circle at 50% 40%, #1b1408 0%, #070502 72%)",
         boxShadow:"inset 0 4px 14px rgba(0,0,0,.9), 0 0 18px rgba(0,0,0,.6)"
       }));
-      slots.push({ x:f.x, y:f.hollow + 4.4, size:24 });
+      slots.push({ x:f.x, y:f.hollow + 4.4, size:28 });
     }
   });
 
@@ -2043,7 +2073,7 @@ function paintTower(scene){
   scene.appendChild(ladder);
 
   // instrument shelf on the mid column
-  buildBookcase(scene, slots, 1.5, 16.5, 40, 78, 3, 25);
+  buildBookcase(scene, slots, 1.5, 16.5, 40, 78, 3, 29);
 
   // long instrument workbench along the bottom
   const bench = el("div","",{
@@ -2054,7 +2084,7 @@ function paintTower(scene){
     boxShadow:"0 12px 28px rgba(0,0,0,.8)"
   });
   scene.appendChild(bench);
-  slots.push.apply(slots, shelfSlots(5, 33, 85.5, 4, 30, 1));
+  slots.push.apply(slots, shelfSlots(5, 33, 85.5, 4, 34, 1));
 
   // crate stack near the telescope base
   [[70,88,11,7],[78,80,8,6],[86,88,10,7]].forEach(([cx,cy,cw,ch])=>{
@@ -2066,11 +2096,11 @@ function paintTower(scene){
       border:"2px solid #4a3518", borderRadius:"2px",
       boxShadow:"0 10px 22px rgba(0,0,0,.75)"
     }));
-    slots.push.apply(slots, shelfSlots(cx - cw*0.3, cx + cw*0.3, cy - 0.5, 2, 26, 0.8));
+    slots.push.apply(slots, shelfSlots(cx - cw*0.3, cx + cw*0.3, cy - 0.5, 2, 30, 0.8));
   });
 
   // ledge along the railing
-  slots.push.apply(slots, shelfSlots(4, 40, railY - 0.4, 4, 22, 1.1));
+  slots.push.apply(slots, shelfSlots(4, 40, railY - 0.4, 4, 28, 1.1));
 
   scene.appendChild(el("div","layer",{
     background:"radial-gradient(76% 68% at 46% 40%, rgba(140,180,255,.07) 0%, rgba(0,0,0,0) 48%, rgba(0,0,0,.88) 100%)"
@@ -2111,7 +2141,10 @@ function placeItems(room, slots){
   // Always reserve a slot for the horcrux — pick the largest available slot so it reads clearly
   const sorted = slots.slice().sort((a,b)=>b.size - a.size);
   const horcruxSlot = sorted[0];
-  const decoySlots = shuffle(slots.filter(s => s !== horcruxSlot)).slice(0, n - 1);
+  const remaining = slots.filter(s => s !== horcruxSlot);
+  const decoySlots = room.key === "hall"
+    ? pickSpreadSlots(remaining, n - 1, [horcruxSlot])
+    : shuffle(remaining).slice(0, n - 1);
 
   placeOneItem(wrap, horcruxSlot, room.horcrux.src, true);
 
@@ -2123,7 +2156,7 @@ function placeItems(room, slots){
 function placeOneItem(wrap, slot, src, isReal){
   const b = el("button","item");
   b.type = "button";
-  const w = (slot.size * 1.72).toFixed(1);
+  const w = (itemSlotSize(slot) * ITEM_PX_SCALE).toFixed(1);
   b.style.setProperty("--item-w", w + "px");
   b.style.left = slot.x + "%";
   b.style.top = slot.y + "%";
