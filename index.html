@@ -1,0 +1,2599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Horcrux Hunt</title>
+<link rel="icon" type="image/png" href="gryffindor-crest.png" />
+<style>
+  :root{
+    --scarlet-deep:#740001;
+    --scarlet:#AE0001;
+    --gold-deep:#D3A625;
+    --gold:#EEBA30;
+    --ink:#2b1a0e;
+    --parchment:#e8d5ac;
+    --noise:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='0.55'/></svg>");
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
+    --easy:#2f7d43;
+    --med:#b4761a;
+    --hard:#9c1500;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:var(--serif);
+    color:var(--parchment);
+    background:#0a0604;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;}
+
+  #app{position:relative;width:100vw;height:100vh;overflow:hidden;}
+  .screen{position:absolute;inset:0;display:none;}
+  .screen.active{display:block;}
+
+  .parchment{
+    position:relative;
+    background:radial-gradient(120% 90% at 50% 0%, #f3e3bf 0%, #e2cb9f 42%, #cdb181 100%);
+    color:var(--ink);
+    border-radius:8px;
+    box-shadow:0 0 0 2px rgba(116,0,1,.55), 0 0 0 5px rgba(211,166,37,.55), 0 24px 60px rgba(0,0,0,.75);
+  }
+  .parchment::after{
+    content:"";position:absolute;inset:0;
+    background-image:var(--noise);background-size:220px 220px;
+    mix-blend-mode:multiply;opacity:.16;pointer-events:none;border-radius:inherit;
+  }
+
+  h1,h2,h3{margin:0;font-weight:700;letter-spacing:.02em;}
+
+  .btn{
+    appearance:none;border:none;cursor:pointer;
+    padding:16px 34px;font-size:20px;
+    font-variant:small-caps;letter-spacing:.12em;
+    color:#fdf1cf;
+    background:linear-gradient(180deg,var(--scarlet) 0%, var(--scarlet-deep) 100%);
+    border-radius:6px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 0 0 2px var(--gold-deep), 0 8px 22px rgba(0,0,0,.6);
+    transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  }
+  .btn:hover{transform:translateY(-2px);filter:brightness(1.12);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 2px var(--gold),0 12px 28px rgba(0,0,0,.65),0 0 24px rgba(238,186,48,.35);}
+
+  /* ============================================================
+     START SCREEN
+     ============================================================ */
+  #startScreen{
+    background:radial-gradient(120% 100% at 50% -10%, #2a1206 0%, #14090a 45%, #070404 100%);
+    overflow-y:auto;
+  }
+  .start-wrap{
+    min-height:100%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px 20px 40px;
+  }
+  .crest{
+    width:104px;height:auto;margin-bottom:10px;
+    filter:drop-shadow(0 0 24px rgba(174,0,1,.6)) drop-shadow(0 6px 14px rgba(0,0,0,.6));
+  }
+  .title{
+    font-size:clamp(32px,5.1vw,58px);
+    font-variant:small-caps;letter-spacing:.03em;
+    color:var(--gold);
+    text-shadow:0 2px 0 #6b4f0f, 0 0 34px rgba(238,186,48,.45);
+    text-align:center;line-height:1.05;
+  }
+  .subtitle{
+    margin:10px 0 4px;color:#e7d3a8;font-size:clamp(14px,1.8vw,19px);
+    letter-spacing:.16em;text-transform:uppercase;opacity:.8;text-align:center;
+  }
+  .intro{max-width:760px;text-align:center;color:#d3bd94;font-size:17px;line-height:1.65;margin:14px 0 22px;}
+
+  .pick-label{
+    color:var(--gold);font-variant:small-caps;letter-spacing:.2em;font-size:27px;margin-bottom:4px;
+  }
+  .pick-sub{
+    color:rgba(238,186,48,.66);font-size:13px;letter-spacing:.24em;text-transform:uppercase;margin-bottom:18px;
+  }
+  .wands{
+    display:grid;
+    grid-template-columns:repeat(3, 346px);
+    justify-content:center;
+    gap:18px;
+    align-items:stretch;
+    max-width:1120px;
+    margin:0 auto;
+  }
+  .wand-card{
+    width:346px;min-height:528px;padding:0;text-align:center;cursor:pointer;border:none;
+    display:flex;flex-direction:column;height:100%;
+    background:radial-gradient(120% 90% at 50% 0%, #f3e3bf 0%, #e2cb9f 45%, #c9ad7c 100%);
+    color:var(--ink);border-radius:10px;overflow:hidden;position:relative;
+    box-shadow:0 0 0 2px rgba(116,0,1,.5),0 0 0 5px rgba(211,166,37,.45),0 18px 40px rgba(0,0,0,.7);
+    transition:transform .16s ease, box-shadow .16s ease;
+  }
+  .wand-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 0 0 2px rgba(116,0,1,.6),0 0 0 6px var(--gold),0 26px 52px rgba(0,0,0,.75),0 0 46px rgba(238,186,48,.3);
+  }
+  .diff-banner{
+    flex-shrink:0;margin:0;
+    padding:9px 0 8px;min-height:54px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:18px;letter-spacing:.3em;text-transform:uppercase;font-weight:700;
+    color:#fff6e2;
+  }
+  .diff-banner .pips{display:block;font-size:14px;letter-spacing:.32em;margin-top:3px;opacity:.9;}
+  .wand-card.easy .diff-banner{background:linear-gradient(180deg,#3d9a55,#256235);}
+  .wand-card.med  .diff-banner{background:linear-gradient(180deg,#d59328,#96590d);}
+  .wand-card.hard .diff-banner{background:linear-gradient(180deg,#c62a10,#740001);}
+  .card-body{
+    flex:1;display:flex;flex-direction:column;
+    padding:14px 20px 22px;
+  }
+  .wand-art{height:44px;display:grid;place-items:center;}
+  .wand-stick{
+    width:150px;height:9px;border-radius:5px;transform:rotate(-8deg);position:relative;
+    box-shadow:0 3px 8px rgba(0,0,0,.45);
+  }
+  .wand-stick::after{
+    content:"";position:absolute;right:-16px;top:50%;
+    width:16px;height:16px;margin-top:-8px;border-radius:50%;
+    background:radial-gradient(circle,#fff8dd 0%,rgba(238,186,48,.75) 45%,rgba(238,186,48,0) 72%);
+    animation:sparkle 2.4s ease-in-out infinite;
+  }
+  @keyframes sparkle{0%,100%{opacity:.55;transform:scale(.85);}50%{opacity:1;transform:scale(1.3);}}
+  .wand-name{font-size:23px;font-variant:small-caps;letter-spacing:.04em;color:#4a1206;}
+  .flavor{font-style:italic;font-size:15.5px;line-height:1.55;color:#4d2d15;min-height:96px;margin:8px 0 10px;}
+  .spec{
+    text-align:left;border-top:1px solid rgba(90,50,15,.28);
+    padding-top:10px;margin-top:4px;
+  }
+  .spec-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:14.5px;color:#54341a;letter-spacing:.03em;padding:4.5px 0;
+  }
+  .spec-row b{font-size:17px;color:#7a1a06;letter-spacing:0;}
+  .spec-row.head{
+    font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:#7d5726;
+    border-bottom:1px dotted rgba(90,50,15,.3);padding-bottom:5px;margin-bottom:3px;
+  }
+  .rec{
+    margin-top:auto;
+    min-height:48px;
+    padding-top:11px;
+    font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+    color:#2f7d43;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  /* ============================================================
+     HUD
+     ============================================================ */
+  #gameScreen{background:#05030a;}
+  #hud{
+    position:absolute;top:0;left:0;right:0;height:92px;z-index:50;
+    display:flex;align-items:center;gap:16px;padding:0 18px;
+    background:linear-gradient(180deg, rgba(8,4,3,.95) 0%, rgba(8,4,3,.7) 62%, rgba(8,4,3,0) 100%);
+    border-bottom:1px solid rgba(238,186,48,.16);
+    pointer-events:none;
+  }
+  .hud-block{display:flex;flex-direction:column;gap:2px;}
+  .hud-label{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(238,186,48,.62);}
+  .hud-value{font-size:22px;color:#f3e2b8;}
+  #roomName{font-variant:small-caps;font-size:27px;color:var(--gold);text-shadow:0 0 18px rgba(238,186,48,.4);}
+  #clueBox{flex:1;text-align:center;font-style:italic;font-size:clamp(19px,2.3vw,28px);color:#f0e0bb;text-shadow:0 2px 8px #000;padding:0 10px;line-height:1.35;}
+  #clueBox .clue-tag{display:block;font-style:normal;font-size:13px;letter-spacing:.22em;color:rgba(238,186,48,.6);text-transform:uppercase;margin-bottom:4px;}
+  #timerVal{font-size:44px;line-height:1;color:#f6e6ba;font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgba(238,186,48,.35);transition:color .2s;}
+  #timerVal.danger{color:#ff5a4e;text-shadow:0 0 22px rgba(255,60,40,.8);animation:pulseRed .9s ease-in-out infinite;}
+  @keyframes pulseRed{0%,100%{transform:scale(1);}50%{transform:scale(1.14);}}
+  .points-bar{width:170px;height:9px;margin-top:5px;border-radius:4px;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(238,186,48,.35);overflow:hidden;}
+  .points-bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--scarlet) 0%,var(--gold) 100%);transition:width .5s ease;}
+  /* ---------- sound on / off control ---------- */
+  .sound-ctl{
+    pointer-events:auto;
+    display:flex;align-items:center;gap:8px;
+    padding:7px 12px;
+    border-radius:8px;
+    background:rgba(12,6,4,.62);
+    box-shadow:inset 0 0 0 1px rgba(238,186,48,.3);
+  }
+  .sound-ctl .sc-label{
+    font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+    color:rgba(238,186,48,.72);
+  }
+  .sbtn{
+    appearance:none;border:none;cursor:pointer;
+    padding:7px 15px;border-radius:6px;
+    font-family:var(--serif);
+    font-size:15px;font-variant:small-caps;letter-spacing:.1em;
+    color:#e6d3a6;
+    background:rgba(255,255,255,.07);
+    box-shadow:inset 0 0 0 1px rgba(238,186,48,.3);
+    transition:background .15s ease, color .15s ease, box-shadow .15s ease;
+  }
+  .sbtn:hover{background:rgba(238,186,48,.2);color:#fff3d2;}
+  .sbtn.active{
+    color:#2a1403;
+    background:linear-gradient(180deg,var(--gold) 0%,var(--gold-deep) 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 0 16px rgba(238,186,48,.45);
+    font-weight:700;
+  }
+  #startSound{
+    position:absolute;top:18px;right:20px;z-index:8;
+  }
+
+  /* ============================================================
+     SCENE
+     ============================================================ */
+  #scene{position:absolute;inset:0;overflow:hidden;}
+  .layer{position:absolute;inset:0;pointer-events:none;}
+
+  #items{position:absolute;inset:0;z-index:30;}
+  .item{
+    position:absolute;
+    transform:translate(-50%,-100%) rotate(var(--rot,0deg));
+    transform-origin:50% 100%;
+    background:none;border:none;padding:0;
+    cursor:pointer;line-height:0;
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.88));
+    transition:filter .15s ease, transform .15s ease;
+    user-select:none;
+    width:var(--item-w, 56px);
+  }
+  .item img{
+    display:block;width:100%;height:auto;pointer-events:none;
+  }
+  .item::after{
+    content:"";position:absolute;left:50%;bottom:-4px;
+    width:96%;height:8px;transform:translateX(-50%);
+    background:radial-gradient(ellipse at center, rgba(0,0,0,.62) 0%, rgba(0,0,0,0) 72%);
+    pointer-events:none;
+  }
+  .item:hover{
+    filter:drop-shadow(0 0 12px rgba(238,186,48,.95)) drop-shadow(0 3px 4px rgba(0,0,0,.85));
+    transform:translate(-50%,-100%) rotate(var(--rot,0deg)) scale(1.25);
+    z-index:5;
+  }
+  .item.wobble{animation:wobble .4s ease;}
+  @keyframes wobble{
+    0%{transform:translate(-50%,-100%) rotate(var(--rot,0deg));}
+    25%{transform:translate(-50%,-100%) rotate(calc(var(--rot,0deg) - 13deg));}
+    60%{transform:translate(-50%,-100%) rotate(calc(var(--rot,0deg) + 11deg));}
+    100%{transform:translate(-50%,-100%) rotate(var(--rot,0deg));}
+  }
+  .puff{
+    position:absolute;width:7px;height:7px;border-radius:50%;
+    background:rgba(220,200,160,.7);pointer-events:none;
+    animation:puff .6s ease-out forwards;
+  }
+  @keyframes puff{
+    from{opacity:.8;transform:translate(-50%,-100%) scale(.4);}
+    to{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-100% + var(--dy))) scale(1.6);}
+  }
+
+  /* ============================================================
+     RON — back POV
+     ============================================================ */
+  #ron{
+    position:absolute;left:50%;bottom:-2%;
+    height:38vh;width:calc(38vh * 0.66);
+    transform:translateX(-50%);
+    z-index:34;pointer-events:none;
+    transform-origin:50% 100%;
+    animation:ronIdle 5.2s ease-in-out infinite;
+  }
+  @keyframes ronIdle{
+    0%,100%{transform:translateX(-50%) rotate(-.7deg);}
+    50%{transform:translateX(-50%) rotate(.7deg);}
+  }
+  #ron.searching{animation:ronSearch 3.4s ease-in-out infinite;}
+  @keyframes ronSearch{
+    0%,100%{transform:translateX(-50%) translateX(-9px) rotate(-1.3deg);}
+    50%{transform:translateX(-50%) translateX(9px) rotate(1.3deg);}
+  }
+  .r-part{position:absolute;}
+  .r-robe{
+    left:50%;bottom:0;width:100%;height:64%;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg,#241c17 0%,#16100c 40%,#090605 100%);
+    clip-path:polygon(20% 0, 80% 0, 100% 62%, 100% 100%, 0 100%, 0 62%);
+    box-shadow:inset 0 6px 18px rgba(255,220,170,.07);
+  }
+  .r-robe::after{
+    content:"";position:absolute;left:50%;top:6%;width:3px;height:94%;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,0));
+  }
+  .r-shoulder{
+    left:50%;bottom:58%;width:104%;height:12%;
+    transform:translateX(-50%);
+    border-radius:46% 46% 0 0;
+    background:linear-gradient(180deg,#2b221c 0%,#191310 100%);
+  }
+  .r-scarf{
+    left:50%;bottom:60%;width:66%;height:9%;
+    transform:translateX(-50%);
+    border-radius:40% 40% 30% 30%;
+    background:repeating-linear-gradient(96deg, var(--scarlet) 0 12px, var(--gold) 12px 24px);
+    box-shadow:0 3px 8px rgba(0,0,0,.6), inset 0 -3px 6px rgba(0,0,0,.35);
+    z-index:3;
+  }
+  .r-scarf-tail{
+    left:64%;bottom:16%;width:17%;height:48%;
+    border-radius:5px 5px 8px 8px;
+    background:repeating-linear-gradient(178deg, var(--scarlet) 0 13px, var(--gold) 13px 26px);
+    box-shadow:2px 3px 10px rgba(0,0,0,.65);
+    transform-origin:50% 0;
+    animation:tailSway 4.4s ease-in-out infinite;
+    z-index:4;
+  }
+  @keyframes tailSway{0%,100%{transform:rotate(-3.5deg);}50%{transform:rotate(3.5deg);}}
+  .r-neck{
+    left:50%;bottom:64%;width:23%;height:10%;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg,#d9a97c 0%,#b5825a 70%,#8c5f3d 100%);
+    border-radius:5px 5px 3px 3px;
+    box-shadow:inset 0 -6px 10px rgba(0,0,0,.35);
+  }
+  /* nape of the neck, just under the hairline */
+  .r-nape{
+    left:50%;bottom:69%;width:34%;height:8%;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg,#e2b287,#bd8a5f);
+    border-radius:6px 6px 40% 40%;
+    z-index:1;
+  }
+  /* the back of Ron's head — a mop of ginger hair, no face */
+  .r-head{
+    left:50%;bottom:70%;width:48%;height:27%;
+    transform:translateX(-50%);
+    border-radius:52% 52% 44% 44% / 58% 58% 42% 42%;
+    background:
+      radial-gradient(64% 54% at 34% 20%, rgba(255,196,128,.42) 0%, rgba(255,150,60,0) 62%),
+      radial-gradient(120% 108% at 50% 16%, #e07420 0%, #c05310 42%, #93360a 74%, #5c2005 100%);
+    box-shadow:inset 0 -12px 22px rgba(0,0,0,.5), 0 6px 22px rgba(0,0,0,.55);
+    z-index:3;
+  }
+  /* whisper of strand texture, radiating from the crown */
+  .r-head::before{
+    content:"";position:absolute;inset:0;border-radius:inherit;
+    background-image:repeating-conic-gradient(from 200deg at 46% 6%,
+      rgba(255,206,146,.07) 0deg 3deg,
+      rgba(0,0,0,0) 3deg 8deg,
+      rgba(88,30,3,.09) 8deg 11deg,
+      rgba(0,0,0,0) 11deg 17deg);
+  }
+  /* low tufts that only just crest the crown */
+  .r-tuft{
+    border-radius:50% 50% 40% 40%;
+    background:linear-gradient(170deg,#e07420 0%,#b2450d 72%,#8a3208 100%);
+    z-index:2;
+  }
+  .r-tuft.t1{left:29%;bottom:95.5%;width:15%;height:4.6%;transform:rotate(-11deg);}
+  .r-tuft.t2{left:42%;bottom:96.6%;width:17%;height:5%;transform:rotate(2deg);}
+  .r-tuft.t3{left:56%;bottom:95%;width:14%;height:4.4%;transform:rotate(13deg);}
+  .r-tuft.t4{display:none;}
+  /* soft hairline over the nape */
+  .r-hairline{
+    left:50%;bottom:69%;width:46%;height:7%;
+    transform:translateX(-50%);
+    background:radial-gradient(80% 130% at 50% 0%, #a6400c 0%, #a6400c 58%, rgba(166,64,12,0) 100%);
+    border-radius:0 0 46% 46%;
+    z-index:4;
+  }
+  .r-ear{
+    bottom:74%;width:7%;height:8.5%;
+    background:linear-gradient(180deg,#dfae83,#ac774d);
+    border-radius:50% 50% 60% 60%;
+    box-shadow:inset 0 -3px 5px rgba(0,0,0,.4);
+    z-index:2;
+  }
+  .r-ear.l{left:21%;}
+  .r-ear.r{right:21%;}
+  .r-arm{
+    right:-6%;bottom:22%;width:14%;height:44%;
+    background:linear-gradient(180deg,#211a15,#0c0908);
+    border-radius:10px 10px 6px 6px;
+    transform-origin:50% 92%;
+    transform:rotate(6deg);
+    transition:transform .45s cubic-bezier(.3,1.5,.4,1);
+    z-index:5;
+  }
+  .r-wand{
+    right:-2%;bottom:60%;width:9%;height:38%;
+    background:linear-gradient(180deg,#c8a06a 0%,#6b4a2c 70%,#3a2717 100%);
+    border-radius:3px;
+    transform-origin:50% 100%;
+    transform:rotate(24deg);
+    transition:transform .45s cubic-bezier(.3,1.5,.4,1);
+    z-index:6;
+    opacity:0;
+  }
+  .r-wand::after{
+    content:"";position:absolute;left:50%;top:-9px;
+    width:18px;height:18px;margin-left:-9px;border-radius:50%;
+    background:radial-gradient(circle,#fff9e0 0%, rgba(238,186,48,.8) 40%, rgba(238,186,48,0) 72%);
+    opacity:0;transition:opacity .3s;
+  }
+  #ron.casting .r-arm{transform:rotate(-58deg) translateY(-8%);}
+  #ron.casting .r-wand{opacity:1;transform:rotate(-16deg) translateY(-28%);}
+  #ron.casting .r-wand::after{opacity:1;animation:wandGlow 1.1s ease-in-out infinite;}
+  @keyframes wandGlow{0%,100%{transform:scale(.9);opacity:.7;}50%{transform:scale(1.5);opacity:1;}}
+  #ron.zap .r-wand::after{animation:none;opacity:1;transform:scale(3.4);}
+
+  .spell-beam{
+    position:absolute;left:50%;bottom:36%;
+    width:10px;height:0;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg, rgba(255,250,220,0) 0%, #fff6cf 30%, var(--gold) 70%, rgba(238,186,48,0) 100%);
+    box-shadow:0 0 30px 8px rgba(238,186,48,.7);
+    z-index:35;pointer-events:none;border-radius:6px;
+    animation:beamUp .55s ease-out forwards;
+  }
+  @keyframes beamUp{
+    0%{height:0;opacity:1;}
+    55%{height:62vh;opacity:1;}
+    100%{height:62vh;opacity:0;}
+  }
+
+  /* ============================================================
+     SPELL OVERLAY
+     ============================================================ */
+  #spellOverlay{
+    position:absolute;inset:0;z-index:60;display:none;
+    align-items:flex-start;justify-content:center;
+    padding-top:11vh;
+    background:radial-gradient(80% 70% at 50% 40%, rgba(20,4,2,.42) 0%, rgba(4,2,1,.86) 100%);
+    backdrop-filter:blur(2px);
+  }
+  #spellOverlay.show{display:flex;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .spell-card{width:min(620px,93vw);padding:26px 34px 28px;text-align:center;}
+  .spell-card.shake{animation:shakeX .42s cubic-bezier(.36,.07,.19,.97);}
+  @keyframes shakeX{
+    10%,90%{transform:translateX(-3px);}20%,80%{transform:translateX(6px);}
+    30%,50%,70%{transform:translateX(-11px);}40%,60%{transform:translateX(11px);}
+  }
+  .horcrux-found{font-size:13.5px;letter-spacing:.24em;text-transform:uppercase;color:#8b1a05;}
+  .horcrux-name{font-size:31px;font-variant:small-caps;letter-spacing:.04em;color:#4a1206;margin-top:2px;}
+  .chain{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    margin:10px 0 4px;
+  }
+  .chain .pip{
+    width:14px;height:14px;border-radius:50%;
+    background:rgba(116,0,1,.16);box-shadow:inset 0 0 0 1.5px rgba(116,0,1,.5);
+  }
+  .chain .pip.done{background:var(--gold-deep);box-shadow:inset 0 0 0 1.5px #7a5a10, 0 0 10px rgba(238,186,48,.7);}
+  .chain .pip.cur{background:var(--scarlet);box-shadow:inset 0 0 0 1.5px #4a0000, 0 0 12px rgba(174,0,1,.6);transform:scale(1.25);}
+  .chain-label{font-size:13.5px;letter-spacing:.2em;text-transform:uppercase;color:#8a6231;}
+  .spell-instruct{font-size:16px;color:#553317;margin:6px 0 8px;line-height:1.45;}
+  .incant{
+    font-size:46px;font-variant:small-caps;letter-spacing:.14em;color:#7a1a06;
+    text-shadow:0 1px 0 rgba(255,255,255,.45), 0 0 22px rgba(174,0,1,.25);
+    margin-bottom:12px;
+  }
+  #spellInput{
+    width:100%;padding:12px 16px;
+    font-family:var(--serif);font-size:29px;text-align:center;letter-spacing:.06em;
+    color:#3a1a08;background:rgba(255,252,240,.75);
+    border:2px solid rgba(116,0,1,.5);border-radius:6px;outline:none;
+    box-shadow:inset 0 2px 6px rgba(90,50,15,.28);
+  }
+  #spellInput:focus{border-color:var(--gold-deep);box-shadow:inset 0 2px 6px rgba(90,50,15,.28),0 0 20px rgba(238,186,48,.5);}
+  #spellInput.wrong{border-color:#b00;background:rgba(255,225,220,.82);}
+  .spell-hint{margin-top:10px;font-size:15px;color:#63421f;letter-spacing:.04em;min-height:17px;}
+  .spell-hint.err{color:#9c1500;font-weight:700;}
+  .spell-hint.good{color:#2f7d43;font-weight:700;}
+  .mini-timer{margin-top:12px;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#6d4a26;}
+  .mini-timer b{font-size:22px;color:#8b1a05;font-variant-numeric:tabular-nums;}
+
+  .burst{
+    position:absolute;width:10px;height:10px;border-radius:50%;
+    pointer-events:none;z-index:70;animation:burst .9s ease-out forwards;
+  }
+  @keyframes burst{
+    from{opacity:1;transform:translate(-50%,-50%) scale(1);}
+    to{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.2);}
+  }
+
+  /* ============================================================
+     INTERLUDE
+     ============================================================ */
+  #interlude{
+    position:absolute;inset:0;z-index:70;display:none;
+    align-items:center;justify-content:center;
+    background:radial-gradient(70% 70% at 50% 50%, rgba(30,8,2,.72) 0%, rgba(3,2,1,.95) 100%);
+  }
+  #interlude.show{display:flex;animation:fadeIn .3s ease;}
+  .interlude-card{width:min(520px,92vw);padding:32px 34px 28px;text-align:center;}
+  .destroyed-title{font-size:15px;letter-spacing:.28em;text-transform:uppercase;color:#8b1a05;}
+  .interlude-card h2{font-size:37px;font-variant:small-caps;color:#4a1206;margin:6px 0 12px;}
+  .award{font-size:22px;color:#63421f;margin-bottom:6px;}
+  .award b{color:#8b1a05;font-size:33px;}
+  .next-room{margin:16px 0 18px;padding-top:14px;border-top:1px solid rgba(90,50,15,.3);font-size:18px;color:#553317;}
+  .next-room b{font-variant:small-caps;font-size:26px;color:#7a1a06;}
+  .warn{font-size:15px;color:#9c1500;font-style:italic;margin-top:6px;}
+
+  /* ============================================================
+     NAGINI
+     ============================================================ */
+  #naginiStage{position:absolute;inset:0;z-index:36;display:none;overflow:hidden;pointer-events:none;}
+  #naginiStage.show{display:block;}
+  .nag-dim{position:absolute;inset:0;background:radial-gradient(58% 58% at 50% 62%, rgba(10,2,2,.25) 0%, rgba(2,1,1,.9) 100%);animation:fadeIn .5s ease;}
+  #nagini{position:absolute;bottom:4%;right:-80%;width:78%;height:210px;}
+  #nagini.slither{animation:slitherIn 2.1s cubic-bezier(.5,.02,.5,1) forwards;}
+  @keyframes slitherIn{from{right:-80%;}to{right:34%;}}
+  .seg{
+    position:absolute;bottom:0;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#6d8f4a,#31461f 70%,#16220d);
+    box-shadow:0 4px 10px rgba(0,0,0,.6), inset -3px -3px 8px rgba(0,0,0,.5);
+  }
+  .snake-head{
+    position:absolute;bottom:0;left:-10px;width:104px;height:66px;
+    border-radius:60% 40% 46% 54%;
+    background:radial-gradient(circle at 60% 32%,#7ea355,#3a5325 65%,#1c2a11);
+    box-shadow:0 6px 16px rgba(0,0,0,.7);
+    transform-origin:80% 60%;
+  }
+  .snake-head .eye{
+    position:absolute;top:17px;left:22px;width:16px;height:10px;border-radius:50%;
+    background:radial-gradient(circle,#ffd84a,#c07800);
+    box-shadow:0 0 12px rgba(255,190,40,.9);
+  }
+  .snake-head .eye::after{content:"";position:absolute;left:6px;top:0;width:3px;height:10px;border-radius:2px;background:#180d02;}
+  .snake-head .tongue{
+    position:absolute;left:-28px;top:38px;width:32px;height:3px;border-radius:2px;
+    background:linear-gradient(90deg,#ff2f4a,#8b0016);
+    animation:flick .45s ease-in-out infinite;transform-origin:100% 50%;
+  }
+  @keyframes flick{0%,100%{transform:scaleX(.35) rotate(4deg);}50%{transform:scaleX(1) rotate(-8deg);}}
+  .snake-head.chomp{animation:chomp .55s ease-in-out;}
+  @keyframes chomp{
+    0%{transform:rotate(0) scale(1);}35%{transform:rotate(-16deg) scale(1.18);}
+    70%{transform:rotate(9deg) scale(1.34);}100%{transform:rotate(0) scale(1.06);}
+  }
+  #ron.tremble{animation:tremble .16s linear infinite;}
+  @keyframes tremble{0%{transform:translateX(-50%) translateX(-3px) rotate(-1deg);}50%{transform:translateX(-50%) translateX(3px) rotate(1deg);}100%{transform:translateX(-50%) translateX(-3px) rotate(-1deg);}}
+  #ron.eaten{animation:eaten .75s ease-in forwards;}
+  @keyframes eaten{
+    0%{opacity:1;transform:translateX(-50%) scale(1) translateY(0) rotate(0);}
+    45%{opacity:1;transform:translateX(-50%) scale(.84) translateY(4%) rotate(-12deg);}
+    100%{opacity:0;transform:translateX(-50%) scale(.14) translateY(14%) rotate(-54deg);}
+  }
+
+  /* ============================================================
+     END SCREENS
+     ============================================================ */
+  #loseScreen{background:radial-gradient(90% 90% at 50% 40%, #1e0304 0%, #0a0203 60%, #050202 100%);}
+  #winScreen{background:radial-gradient(100% 100% at 50% 20%, #2b1206 0%, #140a06 50%, #060403 100%);}
+  .end-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;}
+  #winScreen .end-wrap{
+    display:grid;place-items:center;
+    padding:20px clamp(16px,5vw,120px) 44px;
+    z-index:10;
+  }
+  .end-card{
+    width:min(620px,94vw);padding:34px 40px 30px;text-align:center;z-index:5;
+    animation:riseIn .6s cubic-bezier(.2,.9,.3,1) both;
+  }
+  #winCard{display:none;}
+  #winCard.show{display:block;}
+  @keyframes riseIn{from{opacity:0;transform:translateY(34px) scale(.96);}to{opacity:1;transform:none;}}
+  .end-card h1{font-size:clamp(33px,5.2vw,53px);font-variant:small-caps;color:#4a1206;margin-bottom:6px;}
+  .end-sub{font-size:19px;font-style:italic;color:#63421f;margin-bottom:18px;line-height:1.5;}
+  .score-ring{
+    margin:4px auto 16px;width:180px;height:180px;border-radius:50%;display:grid;place-items:center;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,250,235,.92) 0 58%, rgba(0,0,0,0) 59%),
+      conic-gradient(var(--gold) calc(var(--pct,0) * 1%), rgba(120,80,20,.22) 0);
+    box-shadow:0 0 0 3px rgba(116,0,1,.45), 0 0 34px rgba(238,186,48,.35);
+  }
+  .score-ring .num{font-size:60px;color:#7a1a06;line-height:1;}
+  .score-ring .of{font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:#6d4a26;margin-top:4px;}
+  .breakdown{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-bottom:18px;}
+  .bd{
+    padding:8px 13px;border-radius:6px;background:rgba(116,0,1,.09);
+    box-shadow:inset 0 0 0 1px rgba(116,0,1,.25);
+    font-size:14.5px;color:#553317;
+  }
+  .bd b{display:block;font-size:23px;color:#7a1a06;margin-top:2px;}
+  .cup-line{font-size:26px;font-variant:small-caps;color:#7a1a06;margin-bottom:18px;}
+
+  #voldStage{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;}
+  #vold{
+    position:absolute;left:50%;top:36%;
+    transform:translate(-50%,-50%);
+    width:min(360px, 44vw);
+    transition:opacity .55s ease, filter .55s ease;
+  }
+  #vold img{
+    display:block;width:100%;height:auto;
+    filter:drop-shadow(0 0 48px rgba(120,150,180,.35)) drop-shadow(0 16px 36px rgba(0,0,0,.65));
+  }
+  #vold.dying{opacity:0;filter:blur(10px) brightness(2.8);}
+  .shard{
+    position:absolute;background:linear-gradient(140deg,#d8d4cc,#8a8680,#4a4844);
+    pointer-events:none;animation:shatter 1.5s cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  @keyframes shatter{
+    from{opacity:.95;transform:translate(-50%,-50%) rotate(0) scale(1);}
+    to{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--rr)) scale(.25);}
+  }
+  .confetti{position:absolute;top:-6vh;width:9px;height:15px;border-radius:2px;opacity:.95;animation:fall linear forwards;z-index:3;}
+  @keyframes fall{from{transform:translateY(-10vh) rotate(0);}to{transform:translateY(115vh) rotate(760deg);}}
+  .banner{
+    position:absolute;top:2%;width:104px;height:44%;
+    background:linear-gradient(180deg,var(--scarlet) 0%,var(--scarlet-deep) 88%, rgba(116,0,1,0) 100%);
+    clip-path:polygon(0 0,100% 0,100% 88%,50% 100%,0 88%);
+    box-shadow:0 0 0 3px rgba(211,166,37,.55), 0 14px 40px rgba(0,0,0,.6);
+    display:grid;place-items:start center;padding-top:36px;
+    animation:bannerDrop .9s cubic-bezier(.2,1.4,.4,1) both;z-index:1;
+  }
+  .banner.left{left:clamp(12px,4vw,56px);}
+  .banner.right{right:clamp(12px,4vw,56px);left:auto;}
+  .banner img{
+    width:58px;height:auto;
+    filter:drop-shadow(0 0 12px rgba(238,186,48,.75));
+  }
+  @keyframes bannerDrop{from{transform:translateY(-55%);opacity:0;}to{transform:none;opacity:1;}}
+
+  .flash{position:absolute;inset:0;z-index:90;pointer-events:none;background:#fff;opacity:0;}
+  .flash.go{animation:flashOut .55s ease-out forwards;}
+  @keyframes flashOut{from{opacity:.8;}to{opacity:0;}}
+
+  .footnote{
+    position:absolute;bottom:12px;left:0;right:0;text-align:center;
+    font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:rgba(238,186,48,.38);z-index:6;
+  }
+
+  @media (max-width:1100px){
+    .wands{grid-template-columns:min(360px, 93vw);}
+    #hud{height:auto;padding:10px 12px;flex-wrap:wrap;gap:10px;}
+    #clueBox{order:3;flex-basis:100%;font-size:20px;}
+    #timerVal{font-size:34px;}
+    .wand-card{width:min(360px,93vw);}
+    #ron{height:30vh;width:calc(30vh * 0.66);}
+    .incant{font-size:36px !important;}
+    #startSound{top:10px;right:10px;}
+  }
+</style>
+</head>
+<body>
+<audio id="music" loop preload="auto" autoplay playsinline src="hedwigs-theme.mp3"></audio>
+
+<div id="app">
+
+  <!-- ==================== START ==================== -->
+  <section id="startScreen" class="screen active">
+    <div class="sound-ctl" id="startSound">
+      <span class="sc-label">Sound</span>
+      <button type="button" class="sbtn active" data-sound="on">On</button>
+      <button type="button" class="sbtn" data-sound="off">Off</button>
+    </div>
+    <div class="start-wrap">
+      <img class="crest" src="gryffindor-crest.png" alt="Gryffindor crest" />
+      <h1 class="title">Horcrux Hunt</h1>
+      <div class="subtitle">Three Rooms &#8226; Three Horcruxes &#8226; One Chance</div>
+      <p class="intro">
+        Nagini prowls the castle and the clock is against you. Search each room, follow the clue,
+        find the Horcrux hidden among the clutter, and speak the incantations before time runs out.
+        Later rooms demand a chain of spells. Destroy all three and Gryffindor takes the House Cup.
+      </p>
+      <div class="pick-label">Choose your wand</div>
+      <div class="pick-sub">Your wand sets the difficulty</div>
+      <div class="wands" id="wandList"></div>
+    </div>
+  </section>
+
+  <!-- ==================== GAME ==================== -->
+  <section id="gameScreen" class="screen">
+    <div id="scene"></div>
+
+    <div id="hud">
+      <div class="hud-block">
+        <span class="hud-label">Room <span id="roomIdx">1</span> of 3</span>
+        <span id="roomName">The Great Hall</span>
+      </div>
+      <div id="clueBox"><span class="clue-tag">The Clue</span><span id="clueText"></span></div>
+      <div class="hud-block" style="align-items:flex-end;">
+        <span class="hud-label">Gryffindor Points</span>
+        <span class="hud-value"><span id="pointsVal">0</span> / 100</span>
+        <span class="points-bar"><i id="pointsFill"></i></span>
+      </div>
+      <div class="hud-block" style="align-items:center;min-width:72px;">
+        <span class="hud-label">Time</span>
+        <span id="timerVal">40</span>
+      </div>
+      <div class="sound-ctl">
+        <span class="sc-label">Sound</span>
+        <button type="button" class="sbtn active" data-sound="on">On</button>
+        <button type="button" class="sbtn" data-sound="off">Off</button>
+      </div>
+    </div>
+
+    <div id="spellOverlay">
+      <div class="spell-card parchment" id="spellCard">
+        <div class="horcrux-found">Horcrux Uncovered</div>
+        <div class="horcrux-name" id="hxName">Riddle&#8217;s Diary</div>
+        <div class="chain-label" id="chainLabel">Incantation 1 of 1</div>
+        <div class="chain" id="chainPips"></div>
+        <div class="spell-instruct">Type it exactly and press Enter. The clock does not stop.</div>
+        <div class="incant" id="incantWord">Confringo</div>
+        <input id="spellInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="speak the incantation&#8230;" />
+        <div class="spell-hint" id="spellHint">Press Enter to cast</div>
+        <div class="mini-timer">Time remaining &#183; <b id="spellClock">40</b>s</div>
+      </div>
+    </div>
+
+    <div id="interlude">
+      <div class="interlude-card parchment">
+        <div class="destroyed-title">Horcrux Destroyed</div>
+        <h2 id="ilName">Riddle&#8217;s Diary</h2>
+        <div class="award">You earned <b id="ilPoints">0</b> Gryffindor Points</div>
+        <div class="award" style="font-size:18px;">Total: <span id="ilTotal">0</span> / 100</div>
+        <div class="next-room">
+          Next &#8212; <b id="ilNext">The Enchanted Forest</b>
+          <div class="warn" id="ilWarn"></div>
+        </div>
+        <button class="btn" id="ilBtn">Press On</button>
+      </div>
+    </div>
+
+    <div id="naginiStage">
+      <div class="nag-dim"></div>
+      <div id="nagini"></div>
+    </div>
+
+    <div class="flash" id="flash"></div>
+  </section>
+
+  <!-- ==================== LOSE ==================== -->
+  <section id="loseScreen" class="screen">
+    <div class="end-wrap">
+      <div class="end-card parchment">
+        <h1>Defeated by Nagini</h1>
+        <div class="end-sub">
+          The candles guttered, the clock ran dry, and something long and green came sliding out of
+          the dark behind him. Ron never got the chance to turn around.
+        </div>
+        <div class="breakdown" id="loseBreak"></div>
+        <div class="cup-line">The House Cup slips away&#8230;</div>
+        <button class="btn" id="loseRestart">Try Again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== WIN ==================== -->
+  <section id="winScreen" class="screen">
+    <div id="voldStage">
+      <div id="vold">
+        <img src="voldemort.png" alt="" draggable="false" />
+      </div>
+    </div>
+    <div class="end-wrap">
+      <div class="end-card parchment" id="winCard">
+        <h1>Voldemort Falls</h1>
+        <div class="end-sub">
+          Three Horcruxes shattered, three rooms survived. The Dark Lord comes apart like glass
+          and the castle erupts in scarlet and gold.
+        </div>
+        <div class="score-ring" id="scoreRing">
+          <div>
+            <div class="num" id="finalScore">0</div>
+            <div class="of">of 100 points</div>
+          </div>
+        </div>
+        <div class="breakdown" id="winBreak"></div>
+        <div class="cup-line" id="cupLine">Gryffindor wins the House Cup!</div>
+        <button class="btn" id="winRestart">Play Again</button>
+      </div>
+    </div>
+    <div class="footnote">Mischief managed</div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   DATA
+   ============================================================ */
+
+const WANDS = [
+  {
+    id:"willow", cls:"easy",
+    name:"Willow & Unicorn Hair",
+    tier:"Easy", pips:"\u25CF\u25CB\u25CB",
+    wood:"linear-gradient(90deg,#6b4a2c,#c9a273,#8a6540)",
+    timeMul:1.20, decoys:8,
+    blurb:"Most time, fewest hiding places to search.",
+    flavor:"Fourteen inches, swishy. Unicorn hair is loyal and steadies a shaking hand \u2014 the wand of second chances.",
+    recommend:true
+  },
+  {
+    id:"vine", cls:"med",
+    name:"Vine & Dragon Heartstring",
+    tier:"Medium", pips:"\u25CF\u25CF\u25CB",
+    wood:"linear-gradient(90deg,#3f2f1c,#7d5a33,#4a3620)",
+    timeMul:1.00, decoys:11,
+    blurb:"Standard time, a proper amount of clutter.",
+    flavor:"Vine seeks a witch or wizard with hidden depths. Dragon heartstring answers back with raw, impatient power.",
+    recommend:false
+  },
+  {
+    id:"elder", cls:"hard",
+    name:"Elder & Thestral Tail",
+    tier:"Hard", pips:"\u25CF\u25CF\u25CF",
+    wood:"linear-gradient(90deg,#2b2a2f,#6f6d78,#37363c)",
+    timeMul:0.82, decoys:15,
+    blurb:"Least time, the most objects to sift through.",
+    flavor:"Only those who have looked death in the eye may hope to master it. It is quick, it is cruel, and it gives no quarter.",
+    recommend:false
+  }
+];
+
+const ITEM_POOL = [
+  "assets/items/chocolate-frog.png",
+  "assets/items/hogwarts-ticket.png",
+  "assets/items/flying-broom.png",
+  "assets/items/potion-bottle.png",
+  "assets/items/gryffindor-sword.png",
+  "assets/items/lightning-bolt.png",
+  "assets/items/candy-box.png",
+  "assets/items/monster-book.png",
+  "assets/items/quidditch-bat.png",
+  "assets/items/golden-snitch.png",
+  "assets/items/round-glasses.png",
+  "assets/items/triwizard-egg.png",
+  "assets/items/wand-case.png",
+  "assets/items/triwizard-cup.png",
+  "assets/items/ministry-seal.png"
+];
+/* Horcrux images — one per room only, never used as decoys */
+const HORCRUX_ONLY = [
+  "assets/items/stack-of-books.png",
+  "assets/items/gold-locket.png",
+  "assets/items/sorting-hat.png"
+];
+
+const ROOMS = [
+  {
+    key:"hall",
+    name:"The Great Hall",
+    base:40, share:34,
+    clue:"It holds words but was never meant to be read.",
+    spells:["Confringo"],
+    horcrux:{ name:"Riddle's Diary", src:"assets/items/stack-of-books.png" }
+  },
+  {
+    key:"forest",
+    name:"The Enchanted Forest",
+    base:28, share:33,
+    clue:"It hangs close to the heart.",
+    spells:["Diffindo","Reducto"],
+    horcrux:{ name:"Slytherin's Locket", src:"assets/items/gold-locket.png" }
+  },
+  {
+    key:"tower",
+    name:"The Astronomy Tower",
+    base:22, share:33,
+    clue:"A crown for a clever mind.",
+    spells:["Bombarda","Incendio","Deletrius"],
+    horcrux:{ name:"The Sorting Hat", src:"assets/items/sorting-hat.png" }
+  }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+
+const state = {
+  wand:null,
+  roomIndex:0,
+  timeLeft:0,
+  roomTotal:0,
+  points:0,
+  perRoom:[],
+  spellStep:0,
+  phase:"idle",
+  lastTick:0,
+  lastBeepSec:null,
+  rafId:null
+};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+const $ = (s)=>document.querySelector(s);
+const el = (tag, cls, css)=>{
+  const n = document.createElement(tag);
+  if(cls) n.className = cls;
+  if(css) Object.assign(n.style, css);
+  return n;
+};
+const rand = (a,b)=>a + Math.random()*(b-a);
+const pick = (a)=>a[Math.floor(Math.random()*a.length)];
+const poly = (pts)=>"polygon(" + pts.map(p=>p[0]+"% "+p[1]+"%").join(",") + ")";
+const lerp = (a,b,t)=>a + (b-a)*t;
+
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    const t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  $("#"+id).classList.add("active");
+}
+
+/* slot builders — every slot is a resting surface, never mid-air */
+function shelfSlots(x0, x1, y, n, size, jitter){
+  const out = [];
+  for(let i=0;i<n;i++){
+    const t = n === 1 ? 0.5 : i/(n-1);
+    out.push({
+      x: lerp(x0, x1, t) + rand(-(jitter||0.6), (jitter||0.6)),
+      y: y + rand(-0.35, 0.35),
+      size: size * rand(0.92, 1.08)
+    });
+  }
+  return out;
+}
+function lineSlots(x0, y0, x1, y1, n, sizeNear, sizeFar){
+  const out = [];
+  for(let i=0;i<n;i++){
+    const t = n === 1 ? 0.5 : i/(n-1);
+    out.push({
+      x: lerp(x0, x1, t) + rand(-0.8, 0.8),
+      y: lerp(y0, y1, t) + rand(-0.4, 0.4),
+      size: lerp(sizeNear, sizeFar, t)
+    });
+  }
+  return out;
+}
+
+/* ============================================================
+   AUDIO
+   ============================================================ */
+
+const Sound = {
+  ctx:null, muted:false,
+  init(){
+    if(this.ctx) return;
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) this.ctx = new AC();
+    }catch(e){ this.ctx = null; }
+  },
+  tone(freq, dur, type, vol, delay){
+    if(this.muted || !this.ctx) return;
+    const t0 = this.ctx.currentTime + (delay||0);
+    const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol||0.15, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g).connect(this.ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.03);
+  },
+  sweep(f1, f2, dur, type, vol){
+    if(this.muted || !this.ctx) return;
+    const t0 = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+    osc.type = type || "sawtooth";
+    osc.frequency.setValueAtTime(f1, t0);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(30,f2), t0 + dur);
+    g.gain.setValueAtTime(vol||0.14, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g).connect(this.ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.05);
+  },
+  tick(u){ this.tone(u?900:620, 0.09, "square", 0.07); },
+  ready(){ this.init(); if(this.ctx && this.ctx.state === "suspended") this.ctx.resume(); },
+  pickup(){ this.tone(520,0.06,"triangle",0.08); },
+  reveal(){ this.tone(392,0.16,"sine",0.14); this.tone(587,0.22,"sine",0.12,0.10); },
+  fizzle(){ this.sweep(320, 90, 0.28, "sawtooth", 0.12); },
+  step(){ [660,880].forEach((f,i)=>this.tone(f,0.16,"triangle",0.11,i*0.06)); },
+  cast(){ [523,659,784,1047].forEach((f,i)=>this.tone(f,0.30,"triangle",0.13,i*0.07)); },
+  win(){
+    const n=[523,587,659,784,880,1047,1319];
+    n.forEach((f,i)=>this.tone(f,0.45,"triangle",0.13,i*0.13));
+    this.tone(1568,1.1,"sine",0.10,n.length*0.13);
+  },
+  lose(){ this.sweep(220, 42, 1.4, "sawtooth", 0.16); this.tone(70, 1.6, "square", 0.10, 0.3); }
+};
+
+/* ---------- Hedwig's Theme, looping under the whole game ---------- */
+const Music = {
+  node:null,
+  wanted:true,
+  full:0.34,
+  fadeId:null,
+  unlocked:false,
+  init(){
+    this.node = document.getElementById("music");
+    if(this.node && this.node.paused) this.node.volume = 0;
+  },
+  play(){
+    if(!this.node || !this.wanted) return Promise.resolve();
+    return this.node.play().then(()=>{
+      this.unlocked = true;
+      this.fadeTo(this.full, 900);
+      removeMusicUnlockListeners();
+    }).catch(()=>{ /* browser blocked — wait for a gesture */ });
+  },
+  tryAutoplay(){
+    if(!this.wanted) return;
+    Sound.init();
+    this.play();
+  },
+  pause(){ if(this.node) this.node.pause(); },
+  stop(){ if(!this.node) return; this.node.pause(); this.node.currentTime = 0; this.node.volume = 0; },
+  duck(on){ this.fadeTo(on ? this.full * 0.4 : this.full, 400); },
+  fadeTo(target, ms){
+    if(!this.node) return;
+    clearInterval(this.fadeId);
+    const from = this.node.volume;
+    const steps = Math.max(1, Math.round(ms/40));
+    let i = 0;
+    this.fadeId = setInterval(()=>{
+      i++;
+      const v = from + (target - from) * (i/steps);
+      this.node.volume = Math.min(1, Math.max(0, v));
+      if(i >= steps) clearInterval(this.fadeId);
+    }, 40);
+  }
+};
+
+function unlockMusicFromGesture(){
+  Sound.ready();
+  Music.tryAutoplay();
+}
+function removeMusicUnlockListeners(){
+  document.removeEventListener("pointerdown", unlockMusicFromGesture);
+  document.removeEventListener("keydown", unlockMusicFromGesture);
+  document.removeEventListener("click", unlockMusicFromGesture);
+}
+document.addEventListener("pointerdown", unlockMusicFromGesture);
+document.addEventListener("keydown", unlockMusicFromGesture);
+document.addEventListener("click", unlockMusicFromGesture);
+
+function setSound(on){
+  Sound.muted = !on;
+  Music.wanted = on;
+  document.querySelectorAll(".sbtn").forEach(b=>{
+    b.classList.toggle("active", (b.getAttribute("data-sound") === "on") === on);
+  });
+  if(on){ Sound.ready(); Music.tryAutoplay(); }
+  else { Music.fadeTo(0, 250); setTimeout(()=>Music.pause(), 280); }
+}
+
+/* ============================================================
+   START SCREEN
+   ============================================================ */
+
+function buildWandCards(){
+  const list = $("#wandList");
+  list.innerHTML = "";
+  WANDS.forEach(w=>{
+    const times = ROOMS.map(r=>Math.round(r.base * w.timeMul));
+    const card = el("button","wand-card " + w.cls);
+    card.type = "button";
+    card.innerHTML =
+      '<div class="diff-banner">' + w.tier + '<span class="pips">' + w.pips + '</span></div>' +
+      '<div class="card-body">' +
+        '<div class="wand-art"><div class="wand-stick" style="background:'+w.wood+'"></div></div>' +
+        '<div class="wand-name">'+w.name+'</div>' +
+        '<div class="flavor">&ldquo;'+w.flavor+'&rdquo;</div>' +
+        '<div class="spec">' +
+          '<div class="spec-row head"><span>What this changes</span><span>'+w.tier+'</span></div>' +
+          '<div class="spec-row"><span>Objects to search</span><b>'+w.decoys+' + the Horcrux</b></div>' +
+          '<div class="spec-row"><span>Great Hall timer</span><b>'+times[0]+'s</b></div>' +
+          '<div class="spec-row"><span>Forest timer</span><b>'+times[1]+'s</b></div>' +
+          '<div class="spec-row"><span>Tower timer</span><b>'+times[2]+'s</b></div>' +
+          '<div class="spec-row"><span>Spells to chain</span><b>1 &rarr; 2 &rarr; 3</b></div>' +
+        '</div>' +
+        (w.recommend ? '<div class="rec">Recommended for a first run</div>'
+                     : '<div class="rec" style="color:#8a6231;">'+w.blurb+'</div>') +
+      '</div>';
+    card.addEventListener("click",()=>{
+      Sound.ready();
+      Music.tryAutoplay();
+      Sound.reveal();
+      state.wand = w;
+      startGame();
+    });
+    list.appendChild(card);
+  });
+}
+
+/* ============================================================
+   RON — back POV figure
+   ============================================================ */
+
+function buildRon(){
+  const r = el("div");
+  r.id = "ron";
+  r.innerHTML =
+    '<div class="r-part r-robe"></div>' +
+    '<div class="r-part r-shoulder"></div>' +
+    '<div class="r-part r-scarf-tail"></div>' +
+    '<div class="r-part r-neck"></div>' +
+    '<div class="r-part r-scarf"></div>' +
+    '<div class="r-part r-nape"></div>' +
+    '<div class="r-part r-ear l"></div>' +
+    '<div class="r-part r-ear r"></div>' +
+    '<div class="r-part r-head"></div>' +
+    '<div class="r-part r-tuft t1"></div>' +
+    '<div class="r-part r-tuft t2"></div>' +
+    '<div class="r-part r-tuft t3"></div>' +
+    '<div class="r-part r-tuft t4"></div>' +
+    '<div class="r-part r-hairline"></div>' +
+    '<div class="r-part r-arm"></div>' +
+    '<div class="r-part r-wand"></div>';
+  return r;
+}
+
+function ronCast(on){
+  const r = $("#ron");
+  if(!r) return;
+  r.classList.toggle("casting", !!on);
+  r.classList.toggle("searching", !on);
+}
+
+function ronZap(){
+  const r = $("#ron");
+  if(!r) return;
+  r.classList.add("zap");
+  setTimeout(()=>r.classList.remove("zap"), 420);
+  const beam = el("div","spell-beam");
+  $("#scene").appendChild(beam);
+  setTimeout(()=>beam.remove(), 700);
+}
+
+/* ============================================================
+   SCENE PAINTING  (returns the list of resting slots)
+   ============================================================ */
+
+function paintScene(roomKey){
+  const scene = $("#scene");
+  scene.innerHTML = "";
+  let slots;
+  if(roomKey === "hall") slots = paintGreatHall(scene);
+  else if(roomKey === "forest") slots = paintForest(scene);
+  else slots = paintTower(scene);
+
+  const items = el("div");
+  items.id = "items";
+  scene.appendChild(items);
+  scene.appendChild(buildRon());
+  ronCast(false);
+
+  // keep objects clear of the space Ron occupies
+  return slots.filter(s => !(s.x > 33 && s.x < 67 && s.y > 63));
+}
+
+/* ---------------- ROOM 1 · THE GREAT HALL ---------------- */
+function paintGreatHall(scene){
+  const slots = [];
+  const VPX = 50, VPY = 46;
+
+  scene.appendChild(el("div","layer",{
+    background:"linear-gradient(180deg,#080503 0%,#1a0f07 28%,#2a1a0b 52%,#170e07 78%,#0a0604 100%)"
+  }));
+
+  // receding stone arcade — nested arches converging on the vanishing point
+  for(let i=0;i<6;i++){
+    const s = 1 - i*0.155;
+    const w = 92*s, h = 62*s;
+    const arch = el("div","",{
+      position:"absolute",
+      left:VPX+"%", top:(VPY - h*0.82)+"%",
+      width:w+"%", height:h+"%",
+      transform:"translateX(-50%)",
+      borderRadius:"50% 50% 0 0 / 46% 46% 0 0",
+      border:"0 solid",
+      borderTop:(4-i*0.4)+"px solid rgba(150,120,80,"+(0.5 - i*0.06)+")",
+      borderLeft:(9-i)+"px solid rgba(96,76,52,"+(0.72 - i*0.09)+")",
+      borderRight:(9-i)+"px solid rgba(96,76,52,"+(0.72 - i*0.09)+")",
+      boxShadow:"inset 0 0 90px rgba(0,0,0,.75)",
+      background: i===0 ? "radial-gradient(90% 70% at 50% 40%, rgba(255,170,70,.05), rgba(0,0,0,0) 70%)" : "none"
+    });
+    scene.appendChild(arch);
+  }
+
+  // side wall piers with torches
+  [[0,20],[80,100]].forEach((span, side)=>{
+    const wall = el("div","layer",{
+      clipPath: side===0
+        ? poly([[0,0],[21,15],[21,80],[0,100]])
+        : poly([[100,0],[79,15],[79,80],[100,100]]),
+      background:"linear-gradient(" + (side===0?"90deg":"270deg") + ",#3a2a18 0%,#241809 62%,#120b05 100%)",
+      backgroundImage:
+        "repeating-linear-gradient(0deg, rgba(0,0,0,.35) 0 2px, rgba(0,0,0,0) 2px 48px)," +
+        "repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 2px, rgba(0,0,0,0) 2px 76px)," +
+        "linear-gradient(" + (side===0?"90deg":"270deg") + ",#3a2a18 0%,#241809 62%,#120b05 100%)"
+    });
+    scene.appendChild(wall);
+
+    // torches in wall brackets
+    for(let t=0;t<3;t++){
+      const tx = side===0 ? (3 + t*6) : (97 - t*6);
+      const ty = 26 + t*7;
+      const torch = el("div","",{
+        position:"absolute", left:tx+"%", top:ty+"%",
+        width:"12px", height:"22px",
+        transform:"translate(-50%,-50%)",
+        background:"radial-gradient(circle at 50% 70%, #fff0be 0%, #ff9d20 38%, rgba(255,110,10,0) 76%)",
+        boxShadow:"0 0 46px 14px rgba(255,140,30,.42)",
+        animation:"flicker "+rand(.7,1.5).toFixed(2)+"s ease-in-out infinite alternate"
+      });
+      scene.appendChild(torch);
+    }
+  });
+
+  // far wall + great arched window
+  const farWall = el("div","",{
+    position:"absolute", left:"38%", top:"14%", width:"24%", height:"34%",
+    background:"linear-gradient(180deg,#3a2b1a,#1d1409)",
+    boxShadow:"0 0 60px rgba(0,0,0,.8)"
+  });
+  scene.appendChild(farWall);
+  const win = el("div","",{
+    position:"absolute", left:"50%", top:"11%",
+    width:"15%", height:"33%",
+    transform:"translateX(-50%)",
+    borderRadius:"50% 50% 3px 3px / 30% 30% 3px 3px",
+    background:
+      "radial-gradient(60% 50% at 50% 26%, rgba(255,216,140,.55) 0%, rgba(255,190,90,0) 70%)," +
+      "linear-gradient(180deg,#8ba4e6 0%,#5b6fae 20%,#3d4a7e 46%,#2a2f52 72%,#181a30 100%)",
+    boxShadow:"0 0 110px 22px rgba(150,180,255,.26), inset 0 0 30px rgba(0,0,0,.55)",
+    opacity:".9"
+  });
+  // leaded panes with a few warm coloured lights
+  win.appendChild(el("div","",{
+    position:"absolute", inset:"0", borderRadius:"inherit",
+    backgroundImage:
+      "repeating-linear-gradient(90deg, rgba(255,200,110,.16) 0 9px, rgba(0,0,0,0) 9px 34px)," +
+      "repeating-linear-gradient(90deg, rgba(20,12,4,.92) 0 3px, rgba(0,0,0,0) 3px 17px)," +
+      "repeating-linear-gradient(0deg, rgba(20,12,4,.8) 0 3px, rgba(0,0,0,0) 3px 26px)"
+  }));
+  // stone mullion splitting the window
+  win.appendChild(el("div","",{
+    position:"absolute", left:"50%", top:"6%", bottom:"0", width:"7%",
+    transform:"translateX(-50%)",
+    background:"linear-gradient(90deg,#2b1d0c,#57411f,#2b1d0c)"
+  }));
+  scene.appendChild(win);
+
+  // hanging house banners
+  [[16,"#4b2a6b"],[27,"#8a4a12"],[73,"#8a4a12"],[84,"#4b2a6b"]].forEach(([x,c],i)=>{
+    const depth = Math.abs(x-50)/34;
+    const b = el("div","",{
+      position:"absolute", left:x+"%", top:"0",
+      width:(3 + depth*3.4)+"%", height:(16 + depth*12)+"%",
+      transform:"translateX(-50%)",
+      background:"linear-gradient(180deg,"+c+" 0%, rgba(0,0,0,.55) 100%)",
+      clipPath:"polygon(0 0,100% 0,100% 84%,50% 100%,0 84%)",
+      opacity:String(0.36 + depth*0.34),
+      boxShadow:"0 6px 24px rgba(0,0,0,.6)",
+      animation:"sway "+rand(4,7).toFixed(1)+"s ease-in-out infinite alternate"
+    });
+    scene.appendChild(b);
+  });
+
+  // dense floating candles, smaller as they recede
+  for(let i=0;i<70;i++){
+    const depth = Math.random();
+    const x = lerp(rand(4,96), rand(38,62), depth*depth);
+    const y = lerp(rand(2,20), rand(22,38), depth);
+    const sc = lerp(1, 0.34, depth);
+    const c = el("div","",{
+      position:"absolute", left:x+"%", top:y+"%",
+      width:(5*sc)+"px", height:(22*sc)+"px",
+      background:"linear-gradient(180deg,#fdf3d4,#b9a377)",
+      borderRadius:"2px", opacity:String(0.55 + (1-depth)*0.4),
+      animation:"sway "+rand(3,6).toFixed(2)+"s ease-in-out infinite alternate",
+      animationDelay:(-rand(0,4)).toFixed(2)+"s"
+    });
+    c.appendChild(el("div","",{
+      position:"absolute", left:"50%", top:(-11*sc)+"px",
+      width:(11*sc)+"px", height:(15*sc)+"px", marginLeft:(-5.5*sc)+"px",
+      borderRadius:"50% 50% 46% 46%",
+      background:"radial-gradient(circle at 50% 65%, #fff6c9 0%, #ffbe45 45%, rgba(255,120,10,0) 78%)",
+      boxShadow:"0 0 "+(20*sc)+"px rgba(255,180,60,.9)",
+      animation:"flicker "+rand(.6,1.4).toFixed(2)+"s ease-in-out infinite alternate"
+    }));
+    scene.appendChild(c);
+  }
+
+  // giant floating jack-o-lanterns at several depths
+  const pumpkins = [
+    [11,30,110],[88,26,120],[24,14,64],[75,17,58],[38,9,40],[62,11,44],
+    [50,6,30],[17,45,84],[85,48,78],[31,36,46],[68,38,44]
+  ];
+  pumpkins.forEach(([x,y,size])=>{
+    const p = el("div","",{
+      position:"absolute", left:x+"%", top:y+"%",
+      width:size+"px", height:(size*0.84)+"px",
+      transform:"translate(-50%,-50%)",
+      borderRadius:"46%",
+      background:"radial-gradient(circle at 38% 30%, #ffc25e 0%, #ee8420 42%, #a54a0b 74%, #5d2404 100%)",
+      boxShadow:"0 0 "+(size*0.8)+"px rgba(255,140,30,.5), inset -8px -10px 22px rgba(0,0,0,.45)",
+      animation:"sway "+rand(4,8).toFixed(2)+"s ease-in-out infinite alternate",
+      animationDelay:(-rand(0,5)).toFixed(2)+"s"
+    });
+    // carved face
+    p.appendChild(el("div","",{
+      position:"absolute", left:"17%", top:"28%", width:"28%", height:"20%",
+      background:"#2a0f01",
+      clipPath:"polygon(0 100%,100% 100%,50% 0)",
+      boxShadow:"0 0 12px rgba(255,190,60,.8)"
+    }));
+    p.appendChild(el("div","",{
+      position:"absolute", right:"17%", top:"28%", width:"28%", height:"20%",
+      background:"#2a0f01",
+      clipPath:"polygon(0 100%,100% 100%,50% 0)",
+      boxShadow:"0 0 12px rgba(255,190,60,.8)"
+    }));
+    p.appendChild(el("div","",{
+      position:"absolute", left:"22%", top:"58%", width:"56%", height:"22%",
+      background:"repeating-linear-gradient(90deg,#2a0f01 0 6px, rgba(0,0,0,0) 6px 12px)",
+      boxShadow:"0 0 12px rgba(255,190,60,.6)"
+    }));
+    p.appendChild(el("div","",{
+      position:"absolute", left:"46%", top:"-14%", width:"8%", height:"18%",
+      background:"#4a6b1e", borderRadius:"3px"
+    }));
+    scene.appendChild(p);
+  });
+
+  // bats
+  for(let i=0;i<9;i++){
+    const b = el("div","",{
+      position:"absolute", left:rand(-10,100)+"%", top:rand(6,42)+"%",
+      width:rand(13,24)+"px", height:"9px", opacity:".72",
+      animation:"batFly "+rand(10,19).toFixed(1)+"s linear infinite",
+      animationDelay:(-rand(0,15)).toFixed(1)+"s"
+    });
+    b.innerHTML = '<div style="position:absolute;inset:0;background:#0a0604;clip-path:polygon(0 40%,22% 0,38% 45%,50% 20%,62% 45%,78% 0,100% 40%,80% 100%,50% 62%,20% 100%);"></div>';
+    scene.appendChild(b);
+  }
+
+  // polished stone floor receding to the vanishing point
+  scene.appendChild(el("div","layer",{
+    clipPath: poly([[0,100],[100,100],[62,VPY],[38,VPY]]),
+    background:"linear-gradient(180deg,#5a4526 0%,#3d2d16 34%,#241906 100%)",
+    backgroundImage:
+      "repeating-linear-gradient(90deg, rgba(0,0,0,.3) 0 2px, rgba(0,0,0,0) 2px 90px)," +
+      "linear-gradient(180deg, rgba(255,180,80,.16) 0%, rgba(60,40,16,.9) 60%, rgba(20,12,4,1) 100%)",
+    boxShadow:"inset 0 40px 90px rgba(0,0,0,.7)"
+  }));
+  // the central aisle catches the candlelight
+  scene.appendChild(el("div","layer",{
+    clipPath: poly([[26,100],[74,100],[55,VPY],[45,VPY]]),
+    background:"linear-gradient(180deg, rgba(255,206,130,.30) 0%, rgba(220,168,90,.20) 34%, rgba(120,84,36,.10) 72%, rgba(60,40,16,0) 100%)"
+  }));
+
+  // FOUR long feast tables in perspective — items rest on the two inner ones
+  const NEAR_Y = 106, FAR_Y = VPY + 2;
+  const tables = [
+    { nx:-8,  fx:36.0, inner:false },
+    { nx:19,  fx:43.6, inner:true  },
+    { nx:81,  fx:56.4, inner:true  },
+    { nx:108, fx:64.0, inner:false }
+  ];
+  // where the centre line of a table sits at a given screen height
+  const tableXAt = (tb, y)=>{
+    const t = (NEAR_Y - y) / (NEAR_Y - FAR_Y);
+    return lerp(tb.nx, tb.fx, t);
+  };
+  const halfAt = (y)=>{
+    const t = (NEAR_Y - y) / (NEAR_Y - FAR_Y);
+    return lerp(9.5, 1.5, t);
+  };
+
+  tables.forEach((tb,i)=>{
+    // benches sit outboard of each table
+    const benchOff = i<2 ? -12 : 12;
+    scene.appendChild(el("div","layer",{
+      clipPath: poly([
+        [tb.nx+benchOff-6, NEAR_Y],[tb.nx+benchOff+6, NEAR_Y],
+        [tb.fx+benchOff*0.15+1.3, FAR_Y+1],[tb.fx+benchOff*0.15-1.3, FAR_Y+1]
+      ]),
+      background:"linear-gradient(180deg,#241a12 0%,#0c0806 100%)"
+    }));
+    // seated students, shrinking with distance
+    for(let s=0;s<9;s++){
+      const t = 0.06 + s*0.104;
+      const y = lerp(NEAR_Y, FAR_Y, t);
+      const cx = lerp(tb.nx, tb.fx, t) + benchOff*(1-t*0.86);
+      const sc = lerp(1, 0.16, t);
+      scene.appendChild(el("div","",{
+        position:"absolute", left:cx+"%", top:y+"%",
+        width:(46*sc)+"px", height:(72*sc)+"px",
+        transform:"translate(-50%,-96%)",
+        borderRadius:"46% 46% 12% 12%",
+        background:"linear-gradient(180deg,#3a2c22 0%,#191110 46%,#070505 100%)",
+        boxShadow:"inset 0 "+(3*sc)+"px "+(6*sc)+"px rgba(255,190,110,.22)",
+        opacity:String(0.94 - t*0.2)
+      }));
+    }
+    // table top
+    scene.appendChild(el("div","layer",{
+      clipPath: poly([
+        [tb.nx-9.5, NEAR_Y],[tb.nx+9.5, NEAR_Y],
+        [tb.fx+1.5, FAR_Y],[tb.fx-1.5, FAR_Y]
+      ]),
+      background:"linear-gradient(180deg,#a37a41 0%,#8a6534 18%,#6a4b23 46%,#432e13 78%,#241705 100%)",
+      backgroundImage:
+        "repeating-linear-gradient(93deg, rgba(0,0,0,.16) 0 2px, rgba(0,0,0,0) 2px 26px)," +
+        "linear-gradient(180deg,#b0853f 0%,#8a6534 22%,#644524 52%,#3c2810 82%,#1f1405 100%)",
+      boxShadow:"inset 0 0 70px rgba(0,0,0,.5)"
+    }));
+    // dark seam either side so the table reads as a solid object on the floor
+    [-1,1].forEach(sign=>{
+      scene.appendChild(el("div","layer",{
+        clipPath: poly([
+          [tb.nx + sign*9.5, NEAR_Y],[tb.nx + sign*11.4, NEAR_Y],
+          [tb.fx + sign*1.9,  FAR_Y],[tb.fx + sign*1.5,  FAR_Y]
+        ]),
+        background:"linear-gradient(180deg, rgba(0,0,0,.75) 0%, rgba(0,0,0,.5) 60%, rgba(0,0,0,.25) 100%)"
+      }));
+    });
+    // pale runner down the middle of the inner tables
+    if(tb.inner){
+      scene.appendChild(el("div","layer",{
+        clipPath: poly([
+          [tb.nx-3.6, NEAR_Y],[tb.nx+3.6, NEAR_Y],
+          [tb.fx+0.6, FAR_Y],[tb.fx-0.6, FAR_Y]
+        ]),
+        background:"linear-gradient(180deg, rgba(228,206,158,.5) 0%, rgba(180,152,98,.28) 44%, rgba(120,96,52,.08) 100%)"
+      }));
+      // golden platters heaped with the feast, kept to the far end so they
+      // never compete with the objects the player can actually pick up
+      for(let d=0;d<4;d++){
+        const t = 0.42 + d*0.14;
+        const y = lerp(NEAR_Y, FAR_Y, t);
+        const cx = tableXAt(tb, y) + rand(-halfAt(y)*0.5, halfAt(y)*0.5);
+        const sc = lerp(1, 0.24, t);
+        const dish = el("div","",{
+          position:"absolute", left:cx+"%", top:y+"%",
+          width:(48*sc)+"px", height:(19*sc)+"px",
+          transform:"translate(-50%,-100%)",
+          borderRadius:"50%",
+          background:"radial-gradient(ellipse at 40% 26%, #ffeeb8, #cfa23a 52%, #7a5c17 100%)",
+          boxShadow:"0 "+(4*sc)+"px "+(9*sc)+"px rgba(0,0,0,.75)"
+        });
+        dish.appendChild(el("div","",{
+          position:"absolute", left:"18%", right:"18%", top:"-46%", height:"78%",
+          borderRadius:"50%",
+          background:"radial-gradient(ellipse at 42% 30%, #d98b3a, #94531a 60%, #5a2f0c 100%)"
+        }));
+        scene.appendChild(dish);
+      }
+    }
+  });
+
+  // the searchable objects rest on the two inner table tops
+  [tables[1], tables[2]].forEach(tb=>{
+    for(let k=0;k<6;k++){
+      const t = 0.10 + k*0.135;
+      const y = lerp(NEAR_Y, FAR_Y, t);
+      slots.push({
+        x: tableXAt(tb, y) + rand(-halfAt(y)*0.5, halfAt(y)*0.5),
+        y: y,
+        size: lerp(34, 14, t)
+      });
+    }
+  });
+
+  // left bookcase against the wall
+  buildBookcase(scene, slots, 2.5, 17.5, 40, 82, 3, 26);
+  // right sideboard
+  buildBookcase(scene, slots, 82.5, 97.5, 44, 84, 3, 26);
+
+  scene.appendChild(el("div","layer",{
+    background:"radial-gradient(80% 72% at 50% 42%, rgba(255,170,60,.13) 0%, rgba(0,0,0,0) 52%, rgba(0,0,0,.86) 100%)"
+  }));
+  return slots;
+}
+
+/* a wooden shelving unit; pushes one row of slots per shelf */
+function buildBookcase(scene, slots, x0, x1, yTop, yBot, shelves, size){
+  const w = x1 - x0, h = yBot - yTop;
+  const unit = el("div","",{
+    position:"absolute", left:x0+"%", top:yTop+"%", width:w+"%", height:h+"%",
+    background:"linear-gradient(180deg,#3d2a15 0%,#2a1c0d 55%,#160e06 100%)",
+    boxShadow:"0 14px 34px rgba(0,0,0,.75), inset 0 0 40px rgba(0,0,0,.6)",
+    border:"3px solid #4a3218",
+    borderRadius:"3px"
+  });
+  // back panel grain
+  unit.appendChild(el("div","",{
+    position:"absolute", inset:"4px",
+    backgroundImage:"repeating-linear-gradient(90deg, rgba(0,0,0,.35) 0 3px, rgba(0,0,0,0) 3px 14px)",
+    opacity:".55"
+  }));
+  for(let i=0;i<shelves;i++){
+    const t = (i+1)/(shelves+1);
+    // physical shelf plank
+    unit.appendChild(el("div","",{
+      position:"absolute", left:"2%", right:"2%",
+      top:(t*100)+"%", height:"5px",
+      background:"linear-gradient(180deg,#8a6434,#4a3115)",
+      boxShadow:"0 4px 10px rgba(0,0,0,.75)"
+    }));
+    const shelfY = yTop + h*t;
+    slots.push.apply(slots, shelfSlots(x0 + w*0.16, x1 - w*0.16, shelfY, 3, size, 0.7));
+  }
+  scene.appendChild(unit);
+}
+
+/* ---------------- ROOM 2 · THE ENCHANTED FOREST ---------------- */
+function paintForest(scene){
+  const slots = [];
+
+  scene.appendChild(el("div","layer",{
+    background:"linear-gradient(180deg,#03060f 0%,#081127 26%,#0d1b3a 48%,#122448 62%,#0a1226 82%,#05080f 100%)"
+  }));
+
+  // stars
+  for(let i=0;i<90;i++){
+    scene.appendChild(el("div","",{
+      position:"absolute", left:rand(0,100)+"%", top:rand(0,46)+"%",
+      width:rand(1,2.4).toFixed(1)+"px", height:rand(1,2.4).toFixed(1)+"px",
+      borderRadius:"50%", background:"#cfe0ff", opacity:rand(.2,.85).toFixed(2),
+      animation:"twinkle "+rand(2,6).toFixed(1)+"s ease-in-out infinite alternate",
+      animationDelay:(-rand(0,5)).toFixed(1)+"s"
+    }));
+  }
+
+  // the great light burst in the clearing
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"50%", top:"32%",
+    width:"52%", height:"52%", transform:"translate(-50%,-50%)",
+    borderRadius:"50%",
+    background:"conic-gradient(from 0deg, rgba(190,235,255,.30) 0deg, rgba(190,235,255,0) 7deg, rgba(190,235,255,.26) 15deg, rgba(190,235,255,0) 24deg, rgba(190,235,255,.32) 33deg, rgba(190,235,255,0) 44deg, rgba(190,235,255,.24) 56deg, rgba(190,235,255,0) 68deg, rgba(190,235,255,.30) 82deg, rgba(190,235,255,0) 96deg, rgba(190,235,255,.22) 112deg, rgba(190,235,255,0) 128deg, rgba(190,235,255,.30) 150deg, rgba(190,235,255,0) 168deg, rgba(190,235,255,.26) 192deg, rgba(190,235,255,0) 212deg, rgba(190,235,255,.30) 236deg, rgba(190,235,255,0) 256deg, rgba(190,235,255,.22) 280deg, rgba(190,235,255,0) 300deg, rgba(190,235,255,.30) 324deg, rgba(190,235,255,0) 344deg, rgba(190,235,255,.26) 360deg)",
+    maskImage:"radial-gradient(circle, #000 8%, rgba(0,0,0,.5) 34%, rgba(0,0,0,0) 62%)",
+    WebkitMaskImage:"radial-gradient(circle, #000 8%, rgba(0,0,0,.5) 34%, rgba(0,0,0,0) 62%)",
+    animation:"spinSlow 44s linear infinite", opacity:".85"
+  }));
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"50%", top:"32%",
+    width:"30%", height:"30%", transform:"translate(-50%,-50%)",
+    borderRadius:"50%",
+    background:"radial-gradient(circle, #ffffff 0%, rgba(228,248,255,.95) 9%, rgba(150,215,255,.55) 24%, rgba(80,160,235,.22) 44%, rgba(30,80,170,0) 70%)",
+    animation:"burstPulse 4.2s ease-in-out infinite"
+  }));
+  // shafts of light spilling out of the clearing
+  [-34,-18,-6,9,22,38].forEach(a=>{
+    scene.appendChild(el("div","",{
+      position:"absolute", left:"50%", top:"32%",
+      width:rand(4,11).toFixed(1)+"px", height:"44%",
+      transform:"translate(-50%,0) rotate("+a+"deg)",
+      transformOrigin:"50% 0",
+      background:"linear-gradient(180deg, rgba(230,250,255,.55) 0%, rgba(160,220,255,.16) 46%, rgba(160,220,255,0) 100%)",
+      filter:"blur(3px)"
+    }));
+  });
+
+  // distant tree line behind the clearing
+  for(let i=0;i<34;i++){
+    const x = rand(-2,102);
+    const nearMid = Math.abs(x-50) < 16;
+    scene.appendChild(el("div","",{
+      position:"absolute", left:x+"%", bottom:"30%",
+      width:rand(7,18)+"px", height:rand(18,40)+"%",
+      transform:"translateX(-50%)",
+      background:"linear-gradient(90deg, rgba(90,130,190,.35), #0a1428 42%, #050a16 100%)",
+      opacity:(nearMid ? rand(.55,.85) : rand(.4,.7)).toFixed(2),
+      filter:"blur(1.1px)",
+      clipPath:"polygon(40% 0,60% 0,72% 46%,100% 100%,0 100%,28% 46%)"
+    }));
+  }
+
+  // mid-ground trunks with catch-light on one edge
+  for(let i=0;i<14;i++){
+    const x = rand(2,98);
+    if(x > 40 && x < 60) continue;
+    const w = rand(20,42);
+    scene.appendChild(el("div","",{
+      position:"absolute", left:x+"%", bottom:"26%",
+      width:w+"px", height:rand(38,62)+"%",
+      clipPath:"polygon(30% 0,70% 0,82% 34%,100% 100%,0 100%,18% 34%)",
+      transform:"translateX(-50%) rotate("+rand(-2,2).toFixed(1)+"deg)",
+      background:"linear-gradient(90deg, rgba(140,180,240,.34) 0%, #0c1730 26%, #060b18 62%, #101c38 100%)",
+      backgroundImage:
+        "repeating-linear-gradient(91deg, rgba(255,255,255,.055) 0 1px, rgba(0,0,0,0) 1px 5px, rgba(0,0,0,.28) 5px 6px, rgba(0,0,0,0) 6px 11px)," +
+        "linear-gradient(90deg, rgba(150,190,245,.36) 0%, #0c1730 28%, #05090f 64%, #0e1a34 100%)",
+      boxShadow:"0 0 26px rgba(0,0,0,.6)"
+    }));
+  }
+
+  // snowy ground with a soft horizon
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"0", right:"0", bottom:"0", height:"34%",
+    background:"linear-gradient(180deg, rgba(196,222,255,.5) 0%, rgba(120,160,220,.42) 18%, rgba(46,72,124,.7) 52%, rgba(10,18,38,.96) 100%)"
+  }));
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"0", right:"0", bottom:"27%", height:"9%",
+    background:"radial-gradient(70% 100% at 50% 0%, rgba(180,220,255,.55) 0%, rgba(180,220,255,0) 72%)",
+    filter:"blur(6px)"
+  }));
+
+  // rustic snow-capped fence — objects rest along the top rail
+  const fenceY = 68;
+  const fence = el("div","",{
+    position:"absolute", left:"2%", right:"2%", top:fenceY+"%", height:"11%"
+  });
+  [0, 46].forEach(off=>{
+    fence.appendChild(el("div","",{
+      position:"absolute", left:"0", right:"0", top:off+"%", height:"13%",
+      background:"linear-gradient(180deg,#5c4a38 0%,#2a2018 100%)",
+      boxShadow:"0 3px 8px rgba(0,0,0,.6)"
+    }));
+    fence.appendChild(el("div","",{
+      position:"absolute", left:"0", right:"0", top:(off-4)+"%", height:"5%",
+      background:"linear-gradient(180deg,#e8f2ff,#b9d2f0)", borderRadius:"3px", opacity:".9"
+    }));
+  });
+  for(let i=0;i<9;i++){
+    fence.appendChild(el("div","",{
+      position:"absolute", left:(i*12.5)+"%", top:"-14%",
+      width:"9px", height:"130%",
+      background:"linear-gradient(90deg,#403325,#6a5540,#2a2018)",
+      boxShadow:"0 4px 10px rgba(0,0,0,.6)"
+    }));
+  }
+  scene.appendChild(fence);
+  slots.push.apply(slots, shelfSlots(8, 92, fenceY - 0.5, 9, 25, 1.2));
+
+  // snow-topped bushes, each a cluster of overlapping boughs
+  const bushes = [[9,86,15],[23,81,12],[36,89,13],[64,89,13],[78,81,12],[92,86,15]];
+  bushes.forEach(([bx,by,bw])=>{
+    const bh = bw * 1.7;   // compensate for the viewport being wider than it is tall
+    const bush = el("div","",{
+      position:"absolute", left:bx+"%", top:by+"%",
+      width:bw+"%", height:bh+"%",
+      transform:"translate(-50%,-50%)"
+    });
+    // clumps of foliage heaped into a mound
+    const clumps = [[16,78,50],[50,86,56],[84,78,50],[32,58,46],[68,58,46],[50,40,44]];
+    clumps.forEach(([cx,cy,cs])=>{
+      bush.appendChild(el("div","",{
+        position:"absolute", left:cx+"%", top:cy+"%",
+        width:cs+"%", height:(cs*0.95)+"%",
+        transform:"translate(-50%,-50%)",
+        borderRadius:"50%",
+        background:"radial-gradient(circle at 38% 26%, #35714a 0%, #1d4429 48%, #0a2113 100%)",
+        boxShadow:"0 6px 16px rgba(0,0,0,.6)"
+      }));
+      // a thin cap of snow resting on top of each clump
+      bush.appendChild(el("div","",{
+        position:"absolute", left:cx+"%", top:(cy - cs*0.40)+"%",
+        width:(cs*0.86)+"%", height:(cs*0.34)+"%",
+        transform:"translate(-50%,-50%)",
+        borderRadius:"50%",
+        background:"radial-gradient(ellipse at 50% 78%, rgba(238,247,255,.82) 0%, rgba(198,224,255,.34) 58%, rgba(198,224,255,0) 100%)"
+      }));
+    });
+    // sprigs poking out
+    for(let s=0;s<5;s++){
+      bush.appendChild(el("div","",{
+        position:"absolute", left:rand(14,86)+"%", top:rand(16,44)+"%",
+        width:"2px", height:rand(14,30)+"%",
+        background:"#12301c",
+        transform:"rotate("+rand(-40,40).toFixed(0)+"deg)",
+        transformOrigin:"50% 100%"
+      }));
+    }
+    scene.appendChild(bush);
+    slots.push.apply(slots, shelfSlots(bx - bw*0.26, bx + bw*0.26, by - bh*0.20, 2, 24, 0.8));
+  });
+
+  // wind-blown snow drifts across the ground
+  [[8,96,34],[42,99,40],[78,95,32]].forEach(([dx,dy,dw])=>{
+    scene.appendChild(el("div","",{
+      position:"absolute", left:dx+"%", top:dy+"%",
+      width:dw+"%", height:"11%",
+      transform:"translate(-50%,-50%)",
+      borderRadius:"50%",
+      background:"radial-gradient(circle at 50% 40%, rgba(226,240,255,.55) 0%, rgba(180,212,255,.22) 52%, rgba(180,212,255,0) 100%)",
+      filter:"blur(4px)"
+    }));
+  });
+
+  // fallen log
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"3%", top:"90%", width:"22%", height:"7%",
+    borderRadius:"10px",
+    background:"linear-gradient(180deg,#6b543c 0%,#3d2f21 55%,#1c150f 100%)",
+    backgroundImage:"repeating-linear-gradient(90deg, rgba(0,0,0,.3) 0 3px, rgba(0,0,0,0) 3px 16px)",
+    boxShadow:"0 8px 20px rgba(0,0,0,.7)",
+    transform:"rotate(-2deg)"
+  }));
+  slots.push.apply(slots, shelfSlots(6, 22, 89.5, 3, 30, 0.9));
+
+  // foreground framing trunks (with a hollow each)
+  const frames = [
+    {x:-2, w:16, hollow:null}, {x:7, w:9, hollow:56}, {x:15, w:5, hollow:null},
+    {x:85, w:5, hollow:null}, {x:93, w:9, hollow:52}, {x:102, w:16, hollow:null}
+  ];
+  frames.forEach(f=>{
+    const t = el("div","",{
+      position:"absolute", left:f.x+"%", top:"-4%",
+      width:f.w+"%", height:"108%",
+      transform:"translateX(-50%)",
+      background:"linear-gradient(90deg, rgba(90,110,150,.28) 0%, #0a1122 34%, #05080f 72%, #0a1122 100%)",
+      backgroundImage:
+        "repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,0) 1px 6px, rgba(0,0,0,.3) 6px 8px, rgba(0,0,0,0) 8px 14px)," +
+        "linear-gradient(90deg, rgba(120,150,200,.3) 0%, #0a1122 38%, #04070d 74%, #0c1428 100%)",
+      boxShadow:"0 0 50px rgba(0,0,0,.8)"
+    });
+    scene.appendChild(t);
+    if(f.hollow !== null){
+      scene.appendChild(el("div","",{
+        position:"absolute", left:f.x+"%", top:f.hollow+"%",
+        width:(f.w*0.62)+"%", height:"11%",
+        transform:"translate(-50%,-50%)",
+        borderRadius:"50% 50% 44% 44%",
+        background:"radial-gradient(circle at 50% 40%, #1b1408 0%, #070502 72%)",
+        boxShadow:"inset 0 4px 14px rgba(0,0,0,.9), 0 0 18px rgba(0,0,0,.6)"
+      }));
+      slots.push({ x:f.x, y:f.hollow + 4.4, size:24 });
+    }
+  });
+
+  // branches reaching in from the canopy
+  for(let i=0;i<9;i++){
+    const fromLeft = i % 2 === 0;
+    const b = el("div","",{
+      position:"absolute", top:rand(-4,10)+"%",
+      width:rand(120,300)+"px", height:rand(4,9)+"px",
+      background:"linear-gradient(90deg,#070c16,#0b1222 60%,rgba(11,18,34,0))",
+      borderRadius:"0 6px 6px 0",
+      transformOrigin: fromLeft ? "0 50%" : "100% 50%",
+      transform:"rotate("+(fromLeft ? rand(6,26) : rand(-26,-6)).toFixed(1)+"deg)",
+      opacity:".95"
+    });
+    if(fromLeft) b.style.left = rand(-4,26)+"%"; else b.style.right = rand(-4,26)+"%";
+    scene.appendChild(b);
+  }
+
+  // drifting fog
+  for(let i=0;i<6;i++){
+    scene.appendChild(el("div","",{
+      position:"absolute", left:rand(-30,70)+"%", top:rand(44,84)+"%",
+      width:rand(360,720)+"px", height:rand(80,170)+"px",
+      borderRadius:"50%",
+      background:"radial-gradient(closest-side, rgba(200,225,255,"+rand(.09,.2).toFixed(2)+") 0%, rgba(200,225,255,0) 72%)",
+      filter:"blur(14px)",
+      animation:"drift "+rand(28,56).toFixed(1)+"s linear infinite",
+      animationDelay:(-rand(0,32)).toFixed(1)+"s"
+    }));
+  }
+
+  // fairies and falling snow
+  for(let i=0;i<30;i++){
+    scene.appendChild(el("div","",{
+      position:"absolute", left:rand(2,98)+"%", top:rand(16,82)+"%",
+      width:"5px", height:"5px", borderRadius:"50%",
+      background:"radial-gradient(circle,#f2fbff 0%, rgba(150,220,255,.85) 40%, rgba(120,200,255,0) 72%)",
+      boxShadow:"0 0 14px rgba(150,220,255,.95)",
+      animation:"float "+rand(5,11).toFixed(1)+"s ease-in-out infinite alternate",
+      animationDelay:(-rand(0,8)).toFixed(1)+"s"
+    }));
+  }
+  for(let i=0;i<46;i++){
+    scene.appendChild(el("div","",{
+      position:"absolute", left:rand(0,100)+"%", top:"-4%",
+      width:rand(2,4).toFixed(1)+"px", height:rand(2,4).toFixed(1)+"px",
+      borderRadius:"50%", background:"rgba(226,240,255,.85)",
+      animation:"snowFall "+rand(7,17).toFixed(1)+"s linear infinite",
+      animationDelay:(-rand(0,15)).toFixed(1)+"s"
+    }));
+  }
+
+  scene.appendChild(el("div","layer",{
+    background:"radial-gradient(74% 66% at 50% 38%, rgba(120,180,255,.09) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,.86) 100%)"
+  }));
+  return slots;
+}
+
+/* ---------------- ROOM 3 · THE ASTRONOMY TOWER ---------------- */
+function paintTower(scene){
+  const slots = [];
+
+  scene.appendChild(el("div","layer",{
+    background:"linear-gradient(180deg,#020512 0%,#050d28 32%,#081334 52%,#060a18 74%,#04060e 100%)"
+  }));
+
+  // milky way
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"-24%", top:"-16%", width:"150%", height:"74%",
+    background:"radial-gradient(closest-side, rgba(170,200,255,.22) 0%, rgba(120,150,255,.08) 44%, rgba(0,0,0,0) 74%)",
+    transform:"rotate(-24deg)", filter:"blur(22px)"
+  }));
+
+  for(let i=0;i<190;i++){
+    const sz = rand(1,3);
+    scene.appendChild(el("div","",{
+      position:"absolute", left:rand(0,100)+"%", top:rand(0,62)+"%",
+      width:sz.toFixed(1)+"px", height:sz.toFixed(1)+"px",
+      borderRadius:"50%",
+      background: Math.random()<.14 ? "#ffe9c4" : "#e6efff",
+      opacity:rand(.2,1).toFixed(2),
+      boxShadow: sz>2.2 ? "0 0 8px rgba(220,235,255,.9)" : "none",
+      animation:"twinkle "+rand(1.6,5.5).toFixed(1)+"s ease-in-out infinite alternate",
+      animationDelay:(-rand(0,5)).toFixed(1)+"s"
+    }));
+  }
+
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"9%", top:"8%", width:"78px", height:"78px",
+    borderRadius:"50%",
+    background:"radial-gradient(circle at 38% 34%, #fffdf5 0%, #e6e2d2 52%, #a8a394 82%, rgba(160,160,150,0) 100%)",
+    boxShadow:"0 0 90px 24px rgba(230,235,255,.2)"
+  }));
+
+  // distant mountains
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"0", right:"0", top:"46%", height:"14%",
+    background:"linear-gradient(180deg, rgba(40,60,110,.75), rgba(10,18,40,.9))",
+    clipPath:"polygon(0 100%,0 62%,9% 30%,17% 58%,26% 22%,36% 60%,47% 36%,58% 66%,70% 28%,82% 62%,92% 40%,100% 66%,100% 100%)",
+    filter:"blur(1px)", opacity:".8"
+  }));
+
+  // stone block walls — heavy pier right, slimmer column left of centre
+  const blockTexture =
+    "repeating-linear-gradient(0deg, rgba(0,0,0,.42) 0 3px, rgba(0,0,0,0) 3px 42px)," +
+    "repeating-linear-gradient(90deg, rgba(0,0,0,.34) 0 3px, rgba(0,0,0,0) 3px 68px)";
+
+  const rightPier = el("div","",{
+    position:"absolute", right:"0", top:"-2%", width:"27%", height:"84%",
+    background:"linear-gradient(90deg,#2b2b31 0%,#5a5850 24%,#6e6a5e 52%,#46443d 78%,#26252a 100%)",
+    backgroundImage: blockTexture + ",linear-gradient(90deg,#2b2b31 0%,#5f5c53 26%,#726d60 54%,#46443d 80%,#222126 100%)",
+    boxShadow:"-24px 0 60px rgba(0,0,0,.72)"
+  });
+  scene.appendChild(rightPier);
+  scene.appendChild(el("div","",{
+    position:"absolute", right:"0", top:"-2%", width:"9%", height:"84%",
+    background:"linear-gradient(90deg,#7a7466 0%,#4a473f 60%,#2a292d 100%)",
+    backgroundImage: blockTexture + ",linear-gradient(90deg,#847d6c 0%,#4a473f 62%,#2a292d 100%)",
+    borderRadius:"0 0 0 6px",
+    boxShadow:"-14px 0 34px rgba(0,0,0,.6)"
+  }));
+
+  const midCol = el("div","",{
+    position:"absolute", left:"24%", top:"-2%", width:"11%", height:"72%",
+    background:"linear-gradient(90deg,#3c3b42 0%,#6e6b62 34%,#8a8478 54%,#4e4c44 80%,#2a292e 100%)",
+    backgroundImage: blockTexture + ",linear-gradient(90deg,#3c3b42 0%,#6e6b62 34%,#8a8478 54%,#4e4c44 80%,#2a292e 100%)",
+    boxShadow:"0 0 44px rgba(0,0,0,.6)"
+  });
+  scene.appendChild(midCol);
+
+  // wall sconce on the mid column
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"29.5%", top:"12%",
+    width:"22px", height:"30px", transform:"translateX(-50%)",
+    borderRadius:"6px 6px 10px 10px",
+    background:"linear-gradient(180deg,#f6e4b0,#b89238)",
+    boxShadow:"0 0 60px 22px rgba(255,190,90,.42)"
+  }));
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"29.5%", top:"20%",
+    width:"210px", height:"210px", transform:"translate(-50%,-50%)",
+    borderRadius:"50%",
+    background:"radial-gradient(circle, rgba(255,196,100,.28) 0%, rgba(255,170,60,.09) 40%, rgba(255,160,50,0) 72%)"
+  }));
+
+  // iron railing across the open side
+  const railY = 52;
+  const rail = el("div","",{ position:"absolute", left:"0", right:"26%", top:railY+"%", height:"11%" });
+  rail.appendChild(el("div","",{
+    position:"absolute", left:"0", right:"0", top:"0", height:"5px",
+    background:"linear-gradient(180deg,#3a3d46,#14161b)", boxShadow:"0 3px 10px rgba(0,0,0,.7)"
+  }));
+  rail.appendChild(el("div","",{
+    position:"absolute", left:"0", right:"0", top:"62%", height:"4px",
+    background:"linear-gradient(180deg,#33363e,#101216)"
+  }));
+  for(let i=0;i<20;i++){
+    rail.appendChild(el("div","",{
+      position:"absolute", left:(i*5.3)+"%", top:"0", width:"4px", height:"100%",
+      background:"linear-gradient(90deg,#191b21,#3a3d46,#101216)"
+    }));
+  }
+  scene.appendChild(rail);
+
+  // large irregular flagstone floor
+  scene.appendChild(el("div","",{
+    position:"absolute", left:"0", right:"0", bottom:"0", height:"42%",
+    background:"linear-gradient(180deg,#4a4436 0%,#6e6650 22%,#7d735a 48%,#4a4436 78%,#2c281f 100%)",
+    backgroundImage:
+      "repeating-linear-gradient(88deg, rgba(0,0,0,.26) 0 3px, rgba(0,0,0,0) 3px 118px)," +
+      "repeating-linear-gradient(1deg, rgba(0,0,0,.22) 0 3px, rgba(0,0,0,0) 3px 64px)," +
+      "linear-gradient(180deg,#403a2e 0%,#736a53 26%,#83795f 52%,#4c4638 80%,#2a261e 100%)",
+    boxShadow:"inset 0 30px 60px rgba(0,0,0,.6)"
+  }));
+  // warm pool of lamplight on the stones
+  scene.appendChild(el("div","",{
+    position:"absolute", right:"2%", bottom:"0", width:"40%", height:"36%",
+    background:"radial-gradient(60% 90% at 80% 30%, rgba(255,185,90,.24) 0%, rgba(255,170,60,0) 72%)"
+  }));
+
+  // THE TELESCOPE on its great gimbal ring
+  const rig = el("div","",{
+    position:"absolute", left:"44%", top:"6%", width:"46%", height:"84%"
+  });
+  // outer brass ring
+  rig.appendChild(el("div","",{
+    position:"absolute", left:"38%", top:"6%", width:"52%", height:"62%",
+    borderRadius:"50%",
+    border:"9px solid #8d6d22",
+    boxShadow:"0 0 30px rgba(0,0,0,.6), inset 0 0 46px rgba(0,0,0,.7)",
+    background:"radial-gradient(circle at 42% 34%, rgba(74,62,58,.7) 0%, rgba(34,28,26,.9) 58%, rgba(10,8,8,.96) 100%)"
+  }));
+  // inner tilted ring
+  rig.appendChild(el("div","",{
+    position:"absolute", left:"38%", top:"8%", width:"52%", height:"58%",
+    borderRadius:"50%", border:"6px solid #a5822c",
+    transform:"scaleX(.42)", opacity:".9"
+  }));
+  // cross braces
+  rig.appendChild(el("div","",{
+    position:"absolute", left:"38%", top:"36%", width:"52%", height:"6px",
+    background:"linear-gradient(90deg,#6b5115,#c8a24a,#6b5115)", borderRadius:"3px"
+  }));
+  // brass tube pointing at the sky — segmented barrel with collars
+  const tube = el("div","",{
+    position:"absolute", left:"-24%", top:"9%", width:"70%", height:"9%",
+    transform:"rotate(-28deg)", transformOrigin:"100% 50%"
+  });
+  tube.appendChild(el("div","",{
+    position:"absolute", inset:"0", borderRadius:"10px",
+    background:
+      "linear-gradient(180deg, rgba(255,240,190,.85) 0%, rgba(214,170,70,.5) 22%, rgba(0,0,0,0) 42%, rgba(0,0,0,.42) 78%, rgba(0,0,0,.68) 100%)," +
+      "linear-gradient(90deg,#8a6a20 0%,#d9ae4a 12%,#f2d68d 30%,#c99a33 58%,#8b6819 82%,#5a4210 100%)",
+    boxShadow:"0 10px 26px rgba(0,0,0,.75), inset 0 0 18px rgba(60,40,6,.5)"
+  }));
+  [16,42,70].forEach(p=>{
+    tube.appendChild(el("div","",{
+      position:"absolute", left:p+"%", top:"-13%", width:"3.5%", height:"126%",
+      borderRadius:"3px",
+      background:"linear-gradient(180deg,#f6e2a6,#8a6717 60%,#3d2c07)",
+      boxShadow:"0 3px 8px rgba(0,0,0,.6)"
+    }));
+  });
+  // eyepiece end
+  tube.appendChild(el("div","",{
+    position:"absolute", left:"-6%", top:"-18%", width:"11%", height:"136%",
+    borderRadius:"5px",
+    background:"linear-gradient(180deg,#f4dc9c,#9b7620 62%,#493508)",
+    boxShadow:"0 4px 12px rgba(0,0,0,.7)"
+  }));
+  // dark opening at the far end
+  tube.appendChild(el("div","",{
+    position:"absolute", right:"1%", top:"6%", width:"7%", height:"88%",
+    borderRadius:"50%",
+    background:"radial-gradient(circle,#1a1305,#000)"
+  }));
+  rig.appendChild(tube);
+  // mounting yoke where the tube meets the ring
+  rig.appendChild(el("div","",{
+    position:"absolute", left:"46%", top:"15%", width:"7%", height:"9%",
+    transform:"translate(-50%,-50%) rotate(-28deg)",
+    borderRadius:"4px",
+    background:"linear-gradient(180deg,#d8b055,#6b5115 70%,#33260a)",
+    boxShadow:"0 3px 9px rgba(0,0,0,.8)"
+  }));
+  // dark steel base with rails and feet
+  rig.appendChild(el("div","",{
+    position:"absolute", left:"22%", bottom:"6%", width:"78%", height:"7%",
+    background:"linear-gradient(180deg,#2b3240,#0d1017)",
+    borderRadius:"4px",
+    boxShadow:"0 10px 24px rgba(0,0,0,.8)"
+  }));
+  rig.appendChild(el("div","",{
+    position:"absolute", left:"30%", bottom:"11%", width:"62%", height:"5%",
+    background:"linear-gradient(180deg,#7a4a22,#3a220e)", borderRadius:"3px"
+  }));
+  rig.appendChild(el("div","",{
+    position:"absolute", left:"46%", bottom:"12%", width:"7%", height:"36%",
+    background:"linear-gradient(90deg,#0f131a,#2c333f,#0b0e14)"
+  }));
+  rig.appendChild(el("div","",{
+    position:"absolute", left:"20%", bottom:"3%", width:"84%", height:"4%",
+    background:"linear-gradient(180deg,#222833,#0a0d12)", borderRadius:"3px",
+    transform:"skewX(-6deg)"
+  }));
+  scene.appendChild(rig);
+
+  // iron ladder leaning against the pier
+  const ladder = el("div","",{
+    position:"absolute", right:"12%", top:"10%", width:"4%", height:"58%",
+    transform:"rotate(7deg)", opacity:".85"
+  });
+  ["left","right"].forEach(side=>{
+    const rail = el("div","",{position:"absolute",top:"0",bottom:"0",width:"5px",
+      background:"linear-gradient(90deg,#8e97a4,#454c58 60%,#20242c)"});
+    rail.style[side] = "0";
+    ladder.appendChild(rail);
+  });
+  for(let i=0;i<14;i++){
+    ladder.appendChild(el("div","",{
+      position:"absolute", left:"0", right:"0", top:(i*7.4)+"%", height:"3px",
+      background:"linear-gradient(180deg,#98a1ae,#3a404a)"
+    }));
+  }
+  scene.appendChild(ladder);
+
+  // instrument shelf on the mid column
+  buildBookcase(scene, slots, 1.5, 16.5, 40, 78, 3, 25);
+
+  // long instrument workbench along the bottom
+  const bench = el("div","",{
+    position:"absolute", left:"2%", top:"86%", width:"34%", height:"7%",
+    background:"linear-gradient(180deg,#7a5a2e 0%,#4a3517 46%,#241905 100%)",
+    backgroundImage:"repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 3px, rgba(0,0,0,0) 3px 22px)",
+    borderRadius:"3px",
+    boxShadow:"0 12px 28px rgba(0,0,0,.8)"
+  });
+  scene.appendChild(bench);
+  slots.push.apply(slots, shelfSlots(5, 33, 85.5, 4, 30, 1));
+
+  // crate stack near the telescope base
+  [[70,88,11,7],[78,80,8,6],[86,88,10,7]].forEach(([cx,cy,cw,ch])=>{
+    scene.appendChild(el("div","",{
+      position:"absolute", left:cx+"%", top:cy+"%", width:cw+"%", height:ch+"%",
+      transform:"translateX(-50%)",
+      background:"linear-gradient(180deg,#6b5029 0%,#3d2c13 60%,#1d1408 100%)",
+      backgroundImage:"repeating-linear-gradient(90deg, rgba(0,0,0,.3) 0 3px, rgba(0,0,0,0) 3px 18px)",
+      border:"2px solid #4a3518", borderRadius:"2px",
+      boxShadow:"0 10px 22px rgba(0,0,0,.75)"
+    }));
+    slots.push.apply(slots, shelfSlots(cx - cw*0.3, cx + cw*0.3, cy - 0.5, 2, 26, 0.8));
+  });
+
+  // ledge along the railing
+  slots.push.apply(slots, shelfSlots(4, 40, railY - 0.4, 4, 22, 1.1));
+
+  scene.appendChild(el("div","layer",{
+    background:"radial-gradient(76% 68% at 46% 40%, rgba(140,180,255,.07) 0%, rgba(0,0,0,0) 48%, rgba(0,0,0,.88) 100%)"
+  }));
+  return slots;
+}
+
+/* scene keyframes */
+(function injectKeyframes(){
+  const css = document.createElement("style");
+  css.textContent = `
+    @keyframes flicker{0%{transform:scale(.9) translateY(0);opacity:.85;}100%{transform:scale(1.14) translateY(-2px);opacity:1;}}
+    @keyframes sway{0%{transform:translateX(-3px) rotate(-1.5deg);}100%{transform:translateX(3px) rotate(1.5deg);}}
+    @keyframes twinkle{0%{opacity:.16;}100%{opacity:1;}}
+    @keyframes drift{0%{transform:translateX(-8%);}100%{transform:translateX(118%);}}
+    @keyframes float{0%{transform:translate(0,0);opacity:.35;}100%{transform:translate(14px,-22px);opacity:1;}}
+    @keyframes snowFall{0%{transform:translate(0,-4vh);opacity:0;}10%{opacity:.9;}100%{transform:translate(4vw,108vh);opacity:.2;}}
+    @keyframes burstPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.85;}50%{transform:translate(-50%,-50%) scale(1.12);opacity:1;}}
+    @keyframes spinSlow{from{transform:translate(-50%,-50%) rotate(0deg);}to{transform:translate(-50%,-50%) rotate(360deg);}}
+    @keyframes batFly{0%{transform:translate(0,0) scaleY(1);}25%{transform:translate(30vw,-6vh) scaleY(.55);}50%{transform:translate(62vw,5vh) scaleY(1);}75%{transform:translate(92vw,-4vh) scaleY(.6);}100%{transform:translate(122vw,3vh) scaleY(1);}}
+    @keyframes undulate{0%,100%{transform:translateY(0);}50%{transform:translateY(-18px);}}
+  `;
+  document.head.appendChild(css);
+})();
+
+/* ============================================================
+   PLACING THE OBJECTS ON THE SLOTS
+   ============================================================ */
+
+function placeItems(room, slots){
+  const wrap = $("#items");
+  wrap.innerHTML = "";
+
+  const want = state.wand.decoys + 1;
+  const n = Math.min(want, slots.length);
+  const decoySrcs = shuffle(ITEM_POOL.filter(s => !HORCRUX_ONLY.includes(s)));
+
+  // Always reserve a slot for the horcrux — pick the largest available slot so it reads clearly
+  const sorted = slots.slice().sort((a,b)=>b.size - a.size);
+  const horcruxSlot = sorted[0];
+  const decoySlots = shuffle(slots.filter(s => s !== horcruxSlot)).slice(0, n - 1);
+
+  placeOneItem(wrap, horcruxSlot, room.horcrux.src, true);
+
+  decoySlots.forEach((slot, i)=>{
+    placeOneItem(wrap, slot, decoySrcs[i % decoySrcs.length], false);
+  });
+}
+
+function placeOneItem(wrap, slot, src, isReal){
+  const b = el("button","item");
+  b.type = "button";
+  const w = (slot.size * 1.72).toFixed(1);
+  b.style.setProperty("--item-w", w + "px");
+  b.style.left = slot.x + "%";
+  b.style.top = slot.y + "%";
+  b.style.setProperty("--rot", rand(-9,9).toFixed(1)+"deg");
+  b.setAttribute("aria-label", isReal ? "horcrux" : "object");
+  const img = el("img");
+  img.src = src;
+  img.alt = "";
+  img.draggable = false;
+  b.appendChild(img);
+  b.addEventListener("click", ()=>onItemClick(b, isReal));
+  wrap.appendChild(b);
+}
+
+function onItemClick(node, isReal){
+  if(state.phase !== "playing") return;
+  if(!isReal){
+    node.classList.remove("wobble");
+    void node.offsetWidth;
+    node.classList.add("wobble");
+    Sound.pickup();
+    spawnPuff(node);
+    return;
+  }
+  Sound.reveal();
+  openSpellPrompt();
+}
+
+function spawnPuff(node){
+  const wrap = $("#items");
+  for(let i=0;i<5;i++){
+    const p = el("div","puff");
+    p.style.left = node.style.left;
+    p.style.top = node.style.top;
+    p.style.setProperty("--dx", rand(-24,24).toFixed(0)+"px");
+    p.style.setProperty("--dy", rand(-28,-6).toFixed(0)+"px");
+    wrap.appendChild(p);
+    setTimeout(()=>p.remove(), 620);
+  }
+}
+
+/* ============================================================
+   SPELL CHAIN
+   ============================================================ */
+
+function openSpellPrompt(){
+  state.phase = "spell";
+  state.spellStep = 0;
+  Music.duck(true);
+  ronCast(true);
+  renderSpellStep(true);
+  $("#spellOverlay").classList.add("show");
+  setTimeout(()=>$("#spellInput").focus(), 30);
+}
+
+function renderSpellStep(fresh){
+  const room = ROOMS[state.roomIndex];
+  const total = room.spells.length;
+  $("#hxName").textContent = room.horcrux.name;
+  $("#incantWord").textContent = room.spells[state.spellStep];
+  $("#chainLabel").textContent = total > 1
+    ? "Incantation " + (state.spellStep+1) + " of " + total
+    : "One incantation";
+
+  const pips = $("#chainPips");
+  pips.innerHTML = "";
+  if(total > 1){
+    for(let i=0;i<total;i++){
+      const p = el("div","pip" + (i < state.spellStep ? " done" : (i === state.spellStep ? " cur" : "")));
+      pips.appendChild(p);
+    }
+  }
+
+  const input = $("#spellInput");
+  input.value = "";
+  input.classList.remove("wrong");
+  const hint = $("#spellHint");
+  hint.className = "spell-hint";
+  if(fresh){
+    hint.textContent = total > 1
+      ? "This one needs " + total + " spells in a row \u2014 no mistakes."
+      : "Press Enter to cast";
+  }
+  input.focus();
+}
+
+function closeSpellPrompt(){
+  $("#spellOverlay").classList.remove("show");
+  $("#spellInput").blur();
+  Music.duck(false);
+  ronCast(false);
+}
+
+const normalize = (s)=>s.trim().toLowerCase().replace(/\s+/g," ");
+
+function attemptCast(){
+  if(state.phase !== "spell") return;
+  const room = ROOMS[state.roomIndex];
+  const input = $("#spellInput");
+  const hint = $("#spellHint");
+  const typed = normalize(input.value);
+  const target = normalize(room.spells[state.spellStep]);
+
+  if(typed !== target){
+    Sound.fizzle();
+    const card = $("#spellCard");
+    card.classList.remove("shake");
+    void card.offsetWidth;
+    card.classList.add("shake");
+    input.classList.add("wrong");
+    hint.className = "spell-hint err";
+    hint.textContent = typed.length
+      ? "The spell fizzles \u2014 that is not the incantation. Try again."
+      : "Nothing happens. Speak the word!";
+    input.value = "";
+    input.focus();
+    setTimeout(()=>input.classList.remove("wrong"), 500);
+    return;
+  }
+
+  ronZap();
+  state.spellStep++;
+
+  if(state.spellStep < room.spells.length){
+    Sound.step();
+    renderSpellStep(false);
+    const hint2 = $("#spellHint");
+    hint2.className = "spell-hint good";
+    hint2.textContent = "It shudders \u2014 keep going!";
+    return;
+  }
+
+  Sound.cast();
+  castBurst();
+  closeSpellPrompt();
+  destroyHorcrux();
+}
+
+function castBurst(){
+  const scene = $("#scene");
+  const colors = ["#EEBA30","#D3A625","#AE0001","#fff3cf","#ff8a2b"];
+  for(let i=0;i<46;i++){
+    const b = el("div","burst");
+    b.style.left = "50%"; b.style.top = "48%";
+    b.style.background = pick(colors);
+    const ang = rand(0, Math.PI*2), dist = rand(80, 460);
+    b.style.setProperty("--dx", (Math.cos(ang)*dist).toFixed(0)+"px");
+    b.style.setProperty("--dy", (Math.sin(ang)*dist).toFixed(0)+"px");
+    scene.appendChild(b);
+    setTimeout(()=>b.remove(), 950);
+  }
+  const f = $("#flash");
+  f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
+}
+
+/* ============================================================
+   ROOM FLOW
+   ============================================================ */
+
+function startGame(){
+  state.roomIndex = 0;
+  state.points = 0;
+  state.perRoom = [];
+  showScreen("gameScreen");
+  $("#naginiStage").classList.remove("show");
+  loadRoom(0);
+}
+
+function loadRoom(i){
+  const room = ROOMS[i];
+  state.roomIndex = i;
+  state.roomTotal = room.base * state.wand.timeMul;
+  state.timeLeft = state.roomTotal;
+  state.lastBeepSec = null;
+  state.spellStep = 0;
+
+  $("#roomIdx").textContent = String(i+1);
+  $("#roomName").textContent = room.name;
+  $("#clueText").textContent = "\u201C" + room.clue + "\u201D";
+  updatePoints();
+
+  const slots = paintScene(room.key);
+  placeItems(room, slots);
+  renderTimer();
+
+  state.phase = "playing";
+  state.lastTick = performance.now();
+  if(state.rafId) cancelAnimationFrame(state.rafId);
+  state.rafId = requestAnimationFrame(tick);
+}
+
+function tick(now){
+  state.rafId = requestAnimationFrame(tick);
+  const dt = Math.min(0.25, (now - state.lastTick)/1000);
+  state.lastTick = now;
+  if(state.phase !== "playing" && state.phase !== "spell") return;
+
+  state.timeLeft -= dt;
+  if(state.timeLeft <= 0){
+    state.timeLeft = 0;
+    renderTimer();
+    timeOut();
+    return;
+  }
+  renderTimer();
+
+  const sec = Math.ceil(state.timeLeft);
+  if(sec <= 10 && sec !== state.lastBeepSec){
+    state.lastBeepSec = sec;
+    Sound.tick(sec <= 3);
+  }
+}
+
+function renderTimer(){
+  const t = Math.ceil(state.timeLeft);
+  const tv = $("#timerVal");
+  tv.textContent = String(t);
+  tv.classList.toggle("danger", state.timeLeft < 10);
+  $("#spellClock").textContent = String(t);
+}
+
+function updatePoints(){
+  const p = Math.round(state.points);
+  $("#pointsVal").textContent = String(p);
+  $("#pointsFill").style.width = Math.min(100,p) + "%";
+}
+
+function destroyHorcrux(){
+  const room = ROOMS[state.roomIndex];
+  const earned = (state.timeLeft / state.roomTotal) * room.share;
+  state.points += earned;
+  state.perRoom.push({ name: room.horcrux.name, room: room.name, pts: earned });
+  state.phase = "interlude";
+  updatePoints();
+
+  const items = $("#items");
+  if(items){
+    Array.prototype.forEach.call(items.children, (c,i)=>{
+      c.style.transition = "opacity .5s ease "+(i*0.014)+"s, transform .5s ease";
+      c.style.opacity = "0";
+      c.style.pointerEvents = "none";
+    });
+  }
+
+  setTimeout(()=>{
+    const next = ROOMS[state.roomIndex+1];
+    if(!next){ winGame(); return; }
+    $("#ilName").textContent = room.horcrux.name;
+    $("#ilPoints").textContent = String(Math.round(earned));
+    $("#ilTotal").textContent = String(Math.round(state.points));
+    $("#ilNext").textContent = next.name;
+    $("#ilWarn").textContent = next.spells.length > 1
+      ? "Less time, and " + next.spells.length + " incantations to chain."
+      : "";
+    $("#interlude").classList.add("show");
+  }, 640);
+}
+
+function nextRoom(){
+  $("#interlude").classList.remove("show");
+  loadRoom(state.roomIndex + 1);
+}
+
+/* ============================================================
+   NAGINI
+   ============================================================ */
+
+function timeOut(){
+  if(state.phase === "over") return;
+  state.phase = "over";
+  if(state.rafId) cancelAnimationFrame(state.rafId);
+  closeSpellPrompt();
+  $("#interlude").classList.remove("show");
+  // the music cuts out as Nagini arrives
+  Music.fadeTo(0, 700);
+  setTimeout(()=>Music.stop(), 750);
+  Sound.lose();
+  playNagini();
+}
+
+function buildNagini(){
+  const n = $("#nagini");
+  n.innerHTML = "";
+  const segs = 16;
+  for(let i=0;i<segs;i++){
+    const size = 78 - i*3.4;
+    n.appendChild(el("div","seg",{
+      left:(56 + i*60)+"px",
+      width:size+"px", height:size+"px",
+      bottom:(Math.sin(i*0.72)*28 + 6)+"px",
+      zIndex:String(segs - i),
+      animation:"undulate 1.05s ease-in-out infinite",
+      animationDelay:(-i*0.085).toFixed(3)+"s"
+    }));
+  }
+  const head = el("div","snake-head");
+  head.id = "snakeHead";
+  head.innerHTML = '<div class="eye"></div><div class="tongue"></div>';
+  n.appendChild(head);
+}
+
+function playNagini(){
+  $("#naginiStage").classList.add("show");
+  buildNagini();
+  const ron = $("#ron");
+  if(ron){ ron.classList.remove("casting","searching"); ron.classList.add("tremble"); }
+  const nag = $("#nagini");
+  nag.classList.remove("slither");
+  void nag.offsetWidth;
+  nag.classList.add("slither");
+
+  setTimeout(()=>{
+    const head = $("#snakeHead");
+    if(head) head.classList.add("chomp");
+    Sound.tone(120,0.4,"square",0.16);
+  }, 1900);
+
+  setTimeout(()=>{
+    const r = $("#ron");
+    if(r){ r.classList.remove("tremble"); r.classList.add("eaten"); }
+  }, 2050);
+
+  setTimeout(showLoseScreen, 3150);
+}
+
+function showLoseScreen(){
+  const bd = $("#loseBreak");
+  bd.innerHTML = "";
+  [
+    { l:"Fell in", v: ROOMS[state.roomIndex].name },
+    { l:"Horcruxes destroyed", v: state.perRoom.length + " of 3" },
+    { l:"Points banked", v: String(Math.round(state.points)) }
+  ].forEach(c=>{
+    const d = el("div","bd");
+    d.innerHTML = c.l + "<b>" + c.v + "</b>";
+    bd.appendChild(d);
+  });
+  showScreen("loseScreen");
+}
+
+/* ============================================================
+   WIN
+   ============================================================ */
+
+function winGame(){
+  state.phase = "over";
+  if(state.rafId) cancelAnimationFrame(state.rafId);
+  showScreen("winScreen");
+
+  const vold = $("#vold");
+  vold.classList.remove("dying");
+  vold.style.opacity = "1";
+  $("#winCard").classList.remove("show");
+  document.querySelectorAll(".shard,.confetti,.banner").forEach(n=>n.remove());
+
+  Sound.tone(90, 1.2, "sawtooth", 0.14);
+  setTimeout(()=>{ shatterVoldemort(); Sound.sweep(700, 60, 0.9, "sawtooth", 0.15); }, 900);
+  setTimeout(()=>{ celebrate(); Sound.win(); revealWinCard(); }, 1900);
+}
+
+function shatterVoldemort(){
+  const stage = $("#voldStage"), vold = $("#vold");
+  const r = vold.getBoundingClientRect();
+  vold.classList.add("dying");
+  for(let i=0;i<90;i++){
+    const sh = el("div","shard");
+    sh.style.width = rand(6,26)+"px";
+    sh.style.height = rand(6,30)+"px";
+    sh.style.left = (r.left + rand(0, r.width)) + "px";
+    sh.style.top  = (r.top + rand(0, r.height)) + "px";
+    sh.style.clipPath = "polygon("+rand(0,30)+"% 0,100% "+rand(10,40)+"%,"+rand(60,95)+"% 100%,0 "+rand(55,90)+"%)";
+    const ang = rand(0, Math.PI*2), dist = rand(120, 620);
+    sh.style.setProperty("--dx", (Math.cos(ang)*dist).toFixed(0)+"px");
+    sh.style.setProperty("--dy", (Math.sin(ang)*dist - 40).toFixed(0)+"px");
+    sh.style.setProperty("--rr", rand(-540,540).toFixed(0)+"deg");
+    sh.style.animationDelay = rand(0,0.22).toFixed(2)+"s";
+    stage.appendChild(sh);
+    setTimeout(()=>sh.remove(), 2200);
+  }
+}
+
+function celebrate(){
+  const stage = $("#voldStage");
+  ["left","right"].forEach((side,i)=>{
+    const b = el("div","banner "+side);
+    b.innerHTML = '<img src="gryffindor-crest.png" alt="" />';
+    b.style.animationDelay = (i*0.14)+"s";
+    stage.appendChild(b);
+  });
+  const colors = ["#AE0001","#740001","#EEBA30","#D3A625","#fff3cf"];
+  for(let i=0;i<170;i++){
+    const c = el("div","confetti");
+    c.style.left = rand(0,100)+"%";
+    c.style.background = pick(colors);
+    c.style.animationDuration = rand(2.6,6.2).toFixed(2)+"s";
+    c.style.animationDelay = rand(0,3.4).toFixed(2)+"s";
+    c.style.width = rand(6,12).toFixed(0)+"px";
+    c.style.height = rand(10,20).toFixed(0)+"px";
+    stage.appendChild(c);
+  }
+}
+
+function revealWinCard(){
+  const total = Math.round(state.points);
+  $("#finalScore").textContent = String(total);
+  $("#scoreRing").style.setProperty("--pct", String(total));
+
+  const bd = $("#winBreak");
+  bd.innerHTML = "";
+  state.perRoom.forEach((r,i)=>{
+    const d = el("div","bd");
+    d.innerHTML = "Room " + (i+1) + " &middot; " + r.name + "<b>" + Math.round(r.pts) + " pts</b>";
+    bd.appendChild(d);
+  });
+  const w = el("div","bd");
+  w.innerHTML = "Wand<b>" + state.wand.tier + "</b>";
+  bd.appendChild(w);
+
+  const line = $("#cupLine");
+  if(total >= 85) line.textContent = "A flawless run \u2014 Gryffindor wins the House Cup!";
+  else if(total >= 55) line.textContent = "Gryffindor wins the House Cup!";
+  else line.textContent = "Hard-won, but Gryffindor wins the House Cup!";
+
+  $("#winCard").classList.add("show");
+}
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+
+$("#ilBtn").addEventListener("click", nextRoom);
+$("#loseRestart").addEventListener("click", resetToStart);
+$("#winRestart").addEventListener("click", resetToStart);
+$("#spellInput").addEventListener("keydown",(e)=>{
+  if(e.key === "Enter"){ e.preventDefault(); attemptCast(); }
+});
+document.querySelectorAll(".sbtn").forEach(b=>{
+  b.addEventListener("click",(e)=>{
+    e.stopPropagation();
+    setSound(b.getAttribute("data-sound") === "on");
+  });
+});
+document.addEventListener("keydown",(e)=>{
+  if(e.key === "Enter" && state.phase === "interlude" && $("#interlude").classList.contains("show")){
+    e.preventDefault(); nextRoom();
+  }
+});
+
+function resetToStart(){
+  if(state.rafId) cancelAnimationFrame(state.rafId);
+  state.phase = "idle";
+  state.points = 0;
+  state.perRoom = [];
+  state.roomIndex = 0;
+  $("#interlude").classList.remove("show");
+  closeSpellPrompt();
+  $("#naginiStage").classList.remove("show");
+  $("#nagini").innerHTML = "";
+  document.querySelectorAll(".shard,.confetti,.banner").forEach(n=>n.remove());
+  $("#scene").innerHTML = "";
+  Music.tryAutoplay();
+  showScreen("startScreen");
+}
+
+Music.init();
+window.addEventListener("load", ()=> Music.tryAutoplay());
+document.addEventListener("DOMContentLoaded", ()=> Music.tryAutoplay());
+buildWandCards();
+
+})();
+</script>
+</body>
+</html>
